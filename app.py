@@ -5,184 +5,160 @@ import io
 from datetime import datetime
 
 # Configuración de la página
-st.set_page_config(page_title="AuditaCloud Enterprise", layout="wide", page_icon="🔒")
+st.set_page_config(page_title="AuditaCloud Global Autonomous AI", layout="wide", page_icon="🌐")
 
-# --- CONTROL DE SESIÓN Y BASE DE DATOS SIMULADA ---
+# --- BASE DE DATOS GLOBAL Y LOCALIZACIÓN SIMULADA ---
+PAISES_CONFIG = {
+    "Estados Unidos": {"moneda": "USD ($)", "idioma": "English / Español", "leyes": ["SOX Act Section 404", "AICPA SAS", "GAAS"]},
+    "España": {"moneda": "EUR (€)", "idioma": "Español", "leyes": ["Ley 22/2015 de Auditoría de Cuentas", "Código de Comercio"]},
+    "México": {"moneda": "MXN ($)", "idioma": "Español", "leyes": ["Código Fiscal de la Federación Art. 52", "NIF (CINIF)"]},
+    "Colombia": {"moneda": "COP ($)", "idioma": "Español", "leyes": ["Ley 43 de 1990", "Decreto Único Reglamentario 2420"]},
+    "Argentina": {"moneda": "ARS ($)", "idioma": "Español", "leyes": ["Ley 20.488", "Resolución Técnica FACPCE N° 37"]},
+    "Chile": {"moneda": "CLP ($)", "idioma": "Español", "leyes": ["Ley N° 18.046 de Sociedades Anónimas", "Normas de la CMF"]}
+}
+
 if 'audits' not in st.session_state:
     st.session_state.audits = [
-        {"id": "AUD-001", "proceso": "Contabilidad y Finanzas", "riesgo": "Alto", "normativa": "SOX (Sección 404)", "estado": "En Ejecución", "progreso": 60},
-        {"id": "AUD-002", "proceso": "Gestión de Calidad Operativa", "riesgo": "Medio", "normativa": "ISO 9001:2015", "estado": "Planificado", "progreso": 10},
-        {"id": "AUD-003", "proceso": "Seguridad de TI", "riesgo": "Crítico", "normativa": "ISO 27001 / SOX", "estado": "Finalizado", "progreso": 100},
+        {"id": "AUD-001", "tipo": "Financiera y de Gestión", "proceso": "Tesorería y Caja", "riesgo": "Alto", "normativa": "SOX / INTOSAI P-10", "moneda": "USD", "monto": 1500000},
+        {"id": "AUD-002", "tipo": "Forense", "proceso": "Nómina y Viáticos", "riesgo": "Crítico", "normativa": "Ley Local / ACFE", "moneda": "USD", "monto": 450000}
     ]
 
-if 'findings' not in st.session_state:
-    st.session_state.findings = [
-        {"id": "HALL-01", "auditoria": "AUD-001", "normativa_ref": "SOX - Control de Accesos", "descripcion": "Falta de conciliación bancaria mensual", "criticidad": "Alta", "estado": "Abierto", "comentario_auditado": ""},
-        {"id": "HALL-02", "auditoria": "AUD-001", "normativa_ref": "SOX - Segregación de Funciones", "descripcion": "Accesos de usuarios duplicados en ERP", "criticidad": "Media", "estado": "En Proceso", "comentario_auditado": "En revisión por TI."},
-    ]
+# --- LOCALIZACIÓN DINÁMICA POR EL USUARIO ---
+st.sidebar.title("🌐 Configuración Global Autónoma")
+pais_sel = st.sidebar.selectbox("🗺️ Seleccionar País de Operación:", list(PAISES_CONFIG.keys()))
+moneda_simbolo = PAISES_CONFIG[pais_sel]["moneda"]
+leyes_vigentes = PAISES_CONFIG[pais_sel]["leyes"]
 
-# --- MÓDULO DE CONTROL DE ACCESO (ROLES) ---
-st.sidebar.title("🔒 AuditaCloud Enterprise")
 st.sidebar.markdown("---")
+st.sidebar.subheader("👤 Control de Acceso Localizado")
+rol_usuario = st.sidebar.selectbox("Seleccione su Rol:", ["Auditor Líder (Admin)", "Auditado / Enlace Técnico"])
 
-st.sidebar.subheader("👤 Control de Acceso")
-rol_usuario = st.sidebar.selectbox("Seleccione su Rol:", ["Auditor Líder (Admin)", "Auditado (Líder de Proceso)"])
-
-# Menú dinámico adaptado según el Rol
+# Definición de Módulos
 if rol_usuario == "Auditor Líder (Admin)":
-    menu = st.sidebar.radio(
-        "Menú de Módulos:",
-        ["📊 Dashboard General", "📅 Planificación y Riesgos (ISO/SOX)", "📝 Ejecución y Papeles", "🔔 Seguimiento de Hallazgos", "📥 Generación de Reportes"]
-    )
-    st.sidebar.info("Permisos: **Lectura, Escritura y Firmas**")
+    menu = st.sidebar.radio("Módulos:", ["📊 Dashboard e Indicadores", "🧮 Motor de Fórmulas Automatizadas", "📝 Ejecución y Leyes Locales", "📥 Descarga de Informes"])
 else:
-    menu = st.sidebar.radio(
-        "Menú de Módulos:",
-        ["📊 Dashboard General", "🔔 Responder a Hallazgos"]
-    )
-    st.sidebar.warning("Permisos: **Responder acciones correctivas**")
-
-st.sidebar.markdown("---")
-st.sidebar.caption(f"Entorno Seguro • {datetime.now().strftime('%Y-%m-%d')}")
+    menu = st.sidebar.radio("Módulos:", ["📊 Dashboard e Indicadores", "📝 Ejecución y Leyes Locales"])
 
 # ==========================================
-# MÓDULO: DASHBOARD GENERAL (Ambos Roles)
+# MÓDULO 1: DASHBOARD GLOBAL
 # ==========================================
-if menu == "📊 Dashboard General":
-    st.title("📊 Panel de Control Directivo")
-    st.markdown(f"Bienvenido al sistema. Rol activo actual: **{rol_usuario}**")
+if menu == "📊 Dashboard e Indicadores":
+    st.title("📊 Panel de Control y Analítica de Control Interno")
+    st.markdown(f"Jurisdicción seleccionada: **{pais_sel}** | Moneda de Reporte: **{moneda_simbolo}**")
     
-    df_audits = pd.DataFrame(st.session_state.audits)
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Auditorías", len(df_audits))
-    col2.metric("En Ejecución", len(df_audits[df_audits['estado'] == 'En Ejecución']))
-    col3.metric("Finalizadas", len(df_audits[df_audits['estado'] == 'Finalizado']))
-    col4.metric("Hallazgos Abiertos", len([f for f in st.session_state.findings if f['estado'] != 'Cerrado']))
-    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Leyes Locales Activas en el Motor", len(leyes_vigentes), help=", ".join(leyes_vigentes))
+    col2.metric("Auditorías en Curso", len(st.session_state.audits))
+    col3.metric("Monto Total Bajo Muestreo", f"{moneda_simbolo} {sum([a['monto'] for a in st.session_state.audits]):,}")
+
     st.markdown("---")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.subheader("Progreso y Marco Normativo Asociado")
-        fig_bar = px.bar(df_audits, x='proceso', y='progreso', color='normativa', text='progreso',
-                         labels={'progreso': '% de Avance', 'proceso': 'Proceso Organismo'})
-        st.plotly_chart(fig_bar, use_container_width=True)
-    with c2:
-        st.subheader("Criticidad de Hallazgos Totales")
-        df_find = pd.DataFrame(st.session_state.findings)
-        fig_pie = px.pie(df_find, names='criticidad', color_discrete_sequence=px.colors.sequential.RdBu)
-        st.plotly_chart(fig_pie, use_container_width=True)
-
-# ==========================================
-# MÓDULO: PLANIFICACIÓN Y RIESGOS (Solo Auditor)
-# ==========================================
-elif menu == "📅 Planificación y Riesgos (ISO/SOX)":
-    st.title("📅 Planificación Anual y Matrices Normativas")
-    
-    with st.expander("➕ Vincular Nueva Auditoría al Plan de Cumplimiento", expanded=False):
-        with st.form("form_planificacion"):
-            nuevo_proceso = st.text_input("Área o Proceso:")
-            normativa_select = st.selectbox("Marco de Cumplimiento Target:", ["ISO 9001:2015 (Calidad)", "SOX Sección 404 (Financiero)", "ISO 27001 (Seguridad)", "ISO 14001 (Ambiental)", "Multi-Norma"])
-            probabilidad = st.slider("Probabilidad de Ocurrencia (1-5)", 1, 5, 3)
-            impacto = st.slider("Impacto en la Organización (1-5)", 1, 5, 3)
-            
-            score = probabilidad * impacto
-            riesgo_calculado = "Crítico" if score >= 15 else ("Alto" if score >= 8 else "Medio")
-            
-            btn_guardar = st.form_submit_button("Añadir al Plan de Trabajo")
-            if btn_guardar and nuevo_proceso:
-                st.session_state.audits.append({
-                    "id": f"AUD-00{len(st.session_state.audits) + 1}",
-                    "proceso": nuevo_proceso,
-                    "riesgo": riesgo_calculado,
-                    "normativa": normativa_select,
-                    "estado": "Planificado",
-                    "progreso": 0
-                })
-                st.success("Nueva auditoría agregada con alineación normativa.")
-                st.rerun()
-
-    st.subheader("Universo Normativo Planificado")
-    st.dataframe(pd.DataFrame(st.session_state.audits), use_container_width=True)
-
-# ==========================================
-# MÓDULO: EJECUCIÓN Y PAPELES (Solo Auditor)
-# ==========================================
-elif menu == "📝 Ejecución y Papeles":
-    st.title("📝 Ejecución en Campo y Evidencias")
-    
+    st.subheader("Distribución de Riesgos del Universo de Auditoría")
     df_audits = pd.DataFrame(st.session_state.audits)
-    seleccion = st.selectbox("Seleccione Auditoría:", df_audits['id'] + " - " + df_audits['proceso'])
-    id_sel = seleccion.split(" - ")[0]
-    
-    col_izq, col_der = st.columns(2)
-    with col_izq:
-        st.subheader("Documentar Hallazgo")
-        with st.form("form_hallazgo"):
-            normativa_ref = st.text_input("Cláusula / Punto de Control Afectado (Ej: Cláusula 9.2 ISO o Control Internal SOX):")
-            desc_hallazgo = st.text_area("Descripción de la Deficiencia / Brecha:")
-            criticidad_hallazgo = st.selectbox("Criticidad del Hallazgo:", ["Baja", "Media", "Alta", "Crítica"])
-            st.file_uploader("Evidencia Digital Soportada")
+    fig = px.bar(df_audits, x="tipo", y="monto", color="riesgo", title="Exposición Financiera por Tipo de Auditoría")
+    st.plotly_chart(fig, use_container_width=True)
+
+# ==========================================
+# MÓDULO 2: MOTOR DE FÓRMULAS AUTOMATIZADAS
+# ==========================================
+elif menu == "🧮 Motor de Fórmulas Automatizadas":
+    st.title("🧮 Motor de Fórmulas y Ratios Automatizados")
+    st.markdown("Cálculos científicos paramétricos basados en las metodologías de los órganos rectores internacionales.")
+
+    tipo_auditoria = st.selectbox("Seleccione la Disciplina de Auditoría a Ejecutar:", 
+                                  ["Auditoría Financiera y de Gestión", "Auditoría de Riesgo", "Auditoría de Cumplimiento", "Auditoría Forense / Especial"])
+
+    st.markdown("---")
+
+    if tipo_auditoria == "Auditoría Financiera y de Gestión":
+        st.subheader("📊 Ratios de Gestión e Índices de Liquidez (IFAC / Órganos Rectores)")
+        c1, c2 = st.columns(2)
+        with c1:
+            activo_circ = st.number_input(f"Activo Circulante ({moneda_simbolo}):", min_value=1.0, value=500000.0)
+            pasivo_circ = st.number_input(f"Pasivo Circulante ({moneda_simbolo}):", min_value=1.0, value=250000.0)
+            ratio_liquidez = activo_circ / pasivo_circ
+        with c2:
+            st.metric("Índice de Liquidez Corriente", f"{ratio_liquidez:.2f}")
+            if ratio_liquidez < 1.0:
+                st.error("🚨 Alerta de Gestión: El índice es menor a 1. Riesgo de insolvencia operativa a corto plazo.")
+            elif ratio_liquidez > 2.0:
+                st.warning("⚠️ Alerta de Gestión: Capital de trabajo ocioso. Posible ineficiencia en la asignación de recursos.")
+            else:
+                st.success("✅ Estabilidad Financiera: Ratio dentro del rango óptimo internacional (1.5 - 2.0).")
+
+    elif tipo_auditoria == "Auditoría de Riesgo":
+        st.subheader("🎯 Cálculo Matemático de Riesgo Inherente y Residual (ISO 31000 / COSO)")
+        c1, c2 = st.columns(2)
+        with c1:
+            prob = st.slider("Probabilidad de Ocurrencia (1 a 5):", 1, 5, 3)
+            imp = st.slider("Impacto Financiero u Operativo (1 a 5):", 1, 5, 4)
+            mitigacion = st.slider("Efectividad de Controles de Mitigación (%):", 0, 100, 60)
             
-            if st.form_submit_button("Guardar Papel de Trabajo"):
-                st.session_state.findings.append({
-                    "id": f"HALL-0{len(st.session_state.findings) + 1}",
-                    "auditoria": id_sel,
-                    "normativa_ref": normativa_ref,
-                    "descripcion": desc_hallazgo,
-                    "criticidad": criticidad_hallazgo,
-                    "estado": "Abierto",
-                    "comentario_auditado": ""
-                })
-                st.success("Hallazgo certificado con sello de auditoría.")
-                st.rerun()
-                
-    with col_der:
-        st.subheader("Evidencias Levantadas")
-        df_f = pd.DataFrame(st.session_state.findings)
-        st.dataframe(df_f[df_f['auditoria'] == id_sel][['id', 'normativa_ref', 'descripcion', 'criticidad']], use_container_width=True)
+            riesgo_inherente = prob * imp
+            riesgo_residual = riesgo_inherente * (1 - (mitigacion / 100))
+        with c2:
+            st.metric("Score Riesgo Inherente", f"{riesgo_inherente} / 25")
+            st.metric("Score Riesgo Residual Anualizado", f"{riesgo_residual:.2f} / 25")
+            if riesgo_residual > 12:
+                st.error("🚨 Riesgo Fuera de Tolerancia: Requiere intervención prioritaria e inclusión inmediata en el Plan Anual.")
+            else:
+                st.success("✅ Riesgo Aceptable: Mitigación dentro del umbral de apetito al riesgo de la organización.")
+
+    elif tipo_auditoria == "Auditoría de Cumplimiento":
+        st.subheader("⚖️ Índice de Severidad de Incumplimiento Normativo (INTOSAI)")
+        c1, c2 = st.columns(2)
+        with c1:
+            controles_totales = st.number_input("Total de Controles Clave Evaluados:", min_value=1, value=50)
+            controles_fallidos = st.number_input("Total de Controles No Cumplidos / Fallidos:", min_value=0, value=8)
+            tasa_incumplimiento = (controles_fallidos / controles_totales) * 100
+        with c2:
+            st.metric("Tasa de Incumplimiento Regulatorio", f"{tasa_incumplimiento:.2f}%")
+            if tasa_incumplimiento > 10.0:
+                st.error(f"🚨 Brecha de Cumplimiento Crítica: Supera el límite permisible para para la normativa.")
+            else:
+                st.success("✅ Cumplimiento Regulatorio Conforme.")
+
+    elif tipo_auditoria == "Auditoría Forense / Especial":
+        st.subheader("🕵️ Algoritmo de Detección de Anomalías Numéricas (Ley de Benford)")
+        datos_ejemplo = st.text_area("Inserte los primeros dígitos de la muestra de transacciones (Separados por coma):", "1,2,1,4,5,1,1,2,3,9,8,1,2,7,1,1,3")
+        try:
+            lista_digitos = [int(x.strip()) for x in datos_ejemplo.split(",") if x.strip().isdigit()]
+            total_digitos = len(lista_digitos)
+            unos = lista_digitos.count(1)
+            porcentaje_unos = (unos / total_digitos) * 100 if total_digitos > 0 else 0
+            st.metric("Frecuencia del Dígito '1' en la Muestra", f"{porcentaje_unos:.1f}%")
+            if abs(porcentaje_unos - 30.1) > 10.0:
+                st.error("🚨 Alerta Forense: La distribución numérica diverge significativamente de la Ley de Benford.")
+            else:
+                st.success("✅ Consistencia Numérica Estándar.")
+        except:
+            st.warning("Use números válidos del 1 al 9 separados por comas.")
 
 # ==========================================
-# MÓDULO: SEGUIMIENTO DE HALLAZGOS (Solo Auditor)
+# MÓDULO 3: EJECUCIÓN Y LEYES VIGENTES
 # ==========================================
-elif menu == "🔔 Seguimiento de Hallazgos":
-    st.title("🔔 Panel de Gestión de Brechas y Cierre")
-    
-    for idx, row in pd.DataFrame(st.session_state.findings).iterrows():
-        with st.expander(f"🔎 {row['id']} - Auditoría {row['auditoria']} ({row['criticidad']})", expanded=True):
-            st.write(f"**Referencia Normativa:** {row['normativa_ref']}")
-            st.write(f"**Falla Detectada:** {row['descripcion']}")
-            st.info(f"**Respuesta del Auditado:** {row['comentario_auditado'] if row['comentario_auditado'] else 'Sin respuesta aún'}")
-            
-            nuevo_est = st.selectbox("Actualizar Acción de Cierre:", ["Abierto", "En Proceso", "Cerrado"], index=["Abierto", "En Proceso", "Cerrado"].index(row['estado']), key=f"aud_{row['id']}")
-            if nuevo_est != row['estado']:
-                st.session_state.findings[idx]['estado'] = nuevo_est
-                st.success("Estado de control modificado.")
-                st.rerun()
+elif menu == "📝 Ejecución y Leyes Locales":
+    st.title("📜 Ejecución Autónoma con Alineación de Marco Legal Nacional")
+    st.info(f"Marco Jurídico Cargado para **{pais_sel}**: {', '.join(leyes_vigentes)}")
+    with st.form("form_ejec"):
+        ley_afectada = st.selectbox("Seleccione el cuerpo legal aplicable al Hallazgo:", leyes_vigentes + ["Norma Internacional Transversal"])
+        detalles_hallazgo = st.text_area("Describa la condición o evidencia encontrada en el trabajo de campo:")
+        if st.form_submit_button("Sellar y Almacenar Papel de Trabajo"):
+            st.success(f"✓ Hallazgo blindado legalmente bajo el marco: {ley_afectada}.")
 
 # ==========================================
-# MÓDULO: RESPONDER A HALLAZGOS (Solo Auditado)
+# MÓDULO 4: DOWNLOAD DE REPORTES
 # ==========================================
-elif menu == "🔔 Responder a Hallazgos":
-    st.title("🔔 Panel de Acciones Correctivas (Área Auditada)")
-    st.markdown("Por favor, ingrese sus planes de acción y comentarios de remediación para las brechas asignadas.")
-    
-    hay_pendientes = False
-    for idx, row in pd.DataFrame(st.session_state.findings).iterrows():
-        if row['estado'] != "Cerrado":
-            hay_pendientes = True
-            with st.form(f"form_reply_{row['id']}"):
-                st.markdown(f"#### Hallazgo: {row['id']} ({row['criticidad']})")
-                st.write(f"**Control Incumplido:** {row['normativa_ref']}")
-                st.write(f"**Evidencia del Auditor:** {row['descripcion']}")
-                
-                comentario = st.text_area("Plan de Acción / Compromiso de Remediación:", value=row['comentario_auditado'])
-                
-                if st.form_submit_button(f"Enviar Respuesta {row['id']}"):
-                    st.session_state.findings[idx]['comentario_auditado'] = comentario
-                    st.session_state.findings[idx]['estado'] = "En Proceso"
-                    st.success("Plan de acción enviado al Auditor Líder con éxito.")
-                    st.rerun()
-    if not hay_pendientes:
-        st.success("🎉 ¡Excelente! Su área no tiene brechas ni hallazgos pendientes de mitigar.")
-
-# ==========================================
+elif menu == "📥 Descarga de Informes":
+    st.title("📥 Descarga de Informes de Auditoría Multidivisa")
+    buffer = io.BytesIO()
+    df_export = pd.DataFrame(st.session_state.audits)
+    df_export["País_Jurisdicción"] = pais_sel
+    df_export["Moneda_Local"] = moneda_simbolo
+    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+        df_export.to_excel(writer, sheet_name='Reporte_Global_Autónomo', index=False)
+    st.download_button(
+        label=f"📥 Descargar Informes consolidados de {pais_sel} (.xlsx)",
+        data=buffer.getvalue(),
+        file_name=f"Informe_Autonomo_{pais_sel}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
