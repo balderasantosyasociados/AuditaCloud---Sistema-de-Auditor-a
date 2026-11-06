@@ -1,50 +1,68 @@
-# BASA SUPERSISTEMA V27 — Streamlit Cloud
+# BASA_03_todointegrado
 
-## Archivos
-- `app.py` — aplicación única.
-- `requirements.txt` — dependencias.
-- `.streamlit/config.toml` — configuración básica.
+Aplicación Streamlit única que integra:
+
+- BASA_05_Fiscal
+- BASA_06_Forense
+- BASA_03_todointegrado
 
 ## Despliegue
-1. Cree un repositorio GitHub.
-2. Suba `app.py`, `requirements.txt` y `.streamlit/config.toml`.
-3. En Streamlit Community Cloud seleccione `app.py` como archivo principal.
-4. Configure Secrets antes de uso empresarial.
+
+Archivo principal:
+
+`app.py`
+
+En Streamlit Community Cloud configure el archivo principal como `app.py`.
+
+## requirements.txt
+
+Use el archivo incluido.
 
 ## Secrets recomendados
 
 ```toml
 ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "CAMBIAR_POR_UNA_CLAVE_LARGA_Y_UNICA"
+ADMIN_PASSWORD = "CAMBIAR_POR_UNA_CLAVE_LARGA"
 DEFAULT_COMPANY = "Baldera Santos & Asociados SRL"
 DEFAULT_RNC = "133378711"
 DATABASE_URL = "postgresql+psycopg://USUARIO:CLAVE@HOST:5432/BASE"
 ```
 
-No publique `secrets.toml` en GitHub.
+Si no se configura DATABASE_URL, la aplicación utiliza SQLite para pruebas.
 
-## Modo SQLite
-Si no existe `DATABASE_URL`, la app utiliza SQLite local. Es útil para pruebas, pero no debe considerarse almacenamiento empresarial persistente en un entorno cloud efímero.
+## Módulo fiscal
 
-## Módulos incluidos
-- Dashboard ejecutivo.
-- Risk Engine 1–25.
-- Programas de auditoría.
-- ADA / Big Four Analytics.
-- Benford.
-- Detección de duplicados exactos.
-- Detección fuzzy por similitud de proveedor.
-- Indicador de posible fraccionamiento.
-- Importación CSV/XLSX/XLS/JSON/TXT.
-- Registro documental y SHA-256.
-- Cadena de eventos hash-encadenada.
-- Gestión de empresas.
-- Gestión de usuarios.
-- Registro de auditoría.
-- Exportación Excel.
+Incluye procesamiento de trabajo para:
+- 606
+- 607
+- 608
+- validación
+- conciliación interna
+- TXT de trabajo
+- Excel de auditoría
+- SHA-256
 
-## Seguridad
-La aplicación no contiene una contraseña administrativa fija en el código. Si `ADMIN_PASSWORD` no existe en Secrets, genera una contraseña temporal para la sesión inicial. En producción configure Secrets.
+## Módulo forense
 
-## Nota profesional
-El sistema es una herramienta de apoyo para auditoría, control y análisis. Las referencias a NIA/ISA, NIIF/IFRS, NOBACI y Ley 18-24 deben ser revisadas según el encargo, período, entidad y normativa vigente antes de emitir conclusiones profesionales.
+Incluye:
+- duplicados exactos
+- coincidencias fuzzy
+- Benford
+- posibles pagos fraccionados
+- distribución de montos
+- matriz de riesgo
+
+## Integrado
+
+Incluye:
+- dashboard
+- empresas
+- usuarios
+- expedientes
+- cadena de eventos
+- trazabilidad
+- exportación
+
+## Importante
+
+El TXT generado es un archivo de trabajo y debe validarse contra la estructura oficial de DGII correspondiente al período antes de remitirlo. Las conclusiones de auditoría, fraude o legalidad requieren revisión profesional.
