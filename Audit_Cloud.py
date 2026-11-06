@@ -4,186 +4,168 @@ import plotly.express as px
 import numpy as np
 import io
 import math
+import uuid
 from datetime import datetime
 
 # =========================================================================
-# ⚙️ CONFIGURACIÓN DE INFRAESTRUCTURA DE INTERFAZ (BIG 4 COMPLIANT)
+# ⚙️ CONFIGURACIÓN DE INFRAESTRUCTURA Y CAPA DE DATOS
 # =========================================================================
-st.set_page_config(
-    page_title="AuditaCloud Matrix AI - Enterprise Suite", 
-    layout="wide", 
-    page_icon="🌐",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="AuditaCloud Matrix AI - Corporate Suite", layout="wide", page_icon="🌐")
 
-# Estilo visual corporativo avanzado
-st.markdown("""
-    <style>
-    .big4-header { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111111; font-weight: 700; }
-    .metric-box { background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #0052cc; }
-    </style>
-""", unsafe_allow_html=True)
+# Inicialización de estados y bases de datos relacionales en memoria persistente
+if 'db_empresas' not in st.session_state:
+    st.session_state.db_empresas = {
+        "EMP-881": {"rnc": "101-00123-4", "nombre": "Corporación Dominicana Beta", "moneda": "DOP (RD$)"},
+        "EMP-992": {"rnc": "102-45678-9", "nombre": "Consorcio Financiero Global SA", "moneda": "USD ($)"}
+    }
+
+if 'db_usuarios' not in st.session_state:
+    st.session_state.db_usuarios = {
+        "admin@auditacloud.com": {"clave": "AuditAdmin2026*", "rol": "Administrador Global", "nombre": "Oficial Master AI", "empresa_id": "Todas", "telefono": "8095551234", "identificacion": "001-0000000-1"},
+        "auditor1@beta.com": {"clave": "Auditor2026*", "rol": "Auditor Senior", "nombre": "Lic. Juan Pérez", "empresa_id": "EMP-881", "telefono": "8095554321", "identificacion": "001-1234567-8"}
+    }
+
+if 'universo_auditorias' not in st.session_state:
+    st.session_state.universo_auditorias = [
+        {"id": "AUD-001", "empresa_id": "EMP-881", "tipo": "Auditoría Forense y de Investigación", "programa": "Investigación de Fraude en Adquisiciones", "dependencia": "Ninguna (Fase Inicial)", "objeto": "Licitaciones de Obras Públicas", "probabilidad": 4, "impacto": 5, "riesgo_score": 20, "estado": "En Ejecución", "monto": 45000000.0},
+        {"id": "AUD-002", "empresa_id": "EMP-881", "tipo": "Auditoría Financiera y de Gestión", "programa": "Auditoría de Efectivo y Equivalentes", "dependencia": "AUD-001", "objeto": "Conciliaciones Bancarias de Proyectos", "probabilidad": 3, "impacto": 4, "riesgo_score": 12, "estado": "Planificado"}
+    ]
+
+if 'db_pagos' not in st.session_state:
+    st.session_state.db_pagos = {"EMP-881": True, "EMP-992": False}
+
+if 'registro_pruebas' not in st.session_state:
+    st.session_state.registro_pruebas = {"EMP-992": datetime.now()}
+
+if 'user_logged' not in st.session_state: st.session_state.user_logged = None
+if 'user_rol' not in st.session_state: st.session_state.user_rol = None
+if 'user_empresa' not in st.session_state: st.session_state.user_empresa = None
+
+# CATALOGO MAESTRO DE PROGRAMAS DE AUDITORÍA Y COMPONENTES
+PROGRAMAS_MASTER = {
+    "Auditoría Financiera Corporativa (NIA/NIIF)": [
+        "Auditoría de Efectivo y Equivalentes de Efectivo",
+        "Auditoría de Cuentas por Cobrar e Ingresos Ordinarios",
+        "Auditoría de Inventarios y Costo de Ventas",
+        "Auditoría de Propiedades, Planta y Equipo"
+    ],
+    "Auditoría Forense Avanzada (ACFE)": [
+        "Investigación de Fraude en Adquisiciones y Compras",
+        "Auditoría Forense de Nóminas y Empleados Fantasma",
+        "Rastreo de Malversación de Activos y Desvíos de Fondos",
+        "Detección de Lavado de Activos y Transacciones Sospechosas"
+    ],
+    "Auditoría Gubernamental (Gubernamental/NOBACI RD)": [
+        "Auditoría de Ejecución Presupuestaria General",
+        "Auditoría de Cumplimiento de Normas Básicas de Control Interno (NOBACI)",
+        "Fiscalización de Fondos Públicos y Rendición de Cuentas",
+        "Auditoría Especial de Procesos de Compras Públicas (Ley 449-06)"
+    ],
+    "Auditoría de Sistemas y TI (COBIT/ISACA)": [
+        "Auditoría de Seguridad Lógica y Controles de Acceso ERP",
+        "Auditoría de Continuidad de Negocio y Respaldo de Datos (BCP/DRP)",
+        "Evaluación de Segregación de Funciones Automatizadas"
+    ],
+    "Auditoría Legal y de Cumplimiento Regulatorio": [
+        "Auditoría de Cumplimiento de Obligaciones Fiscales (DGII)",
+        "Revisión de Cumplimiento Normativo de Contratos Comerciales",
+        "Auditoría de Prevención de Riesgos Legales y Estatutarios"
+    ]
+}
 
 # =========================================================================
-# 🔒 SISTEMA DE AUTENTICACIÓN (CLAVE MAESTRA CORPORATIVA)
+# 🔐 CAPA DE AUTENTICACIÓN, REGISTRO Y RECUPERACIÓN
 # =========================================================================
-CLAVE_MAESTRA = "AuditAdmin2026*"
-
-if "autenticado" not in st.session_state:
-    st.session_state.autenticado = False
-
-if not st.session_state.autenticado:
-    st.title("🔒 AuditaCloud Matrix AI - Acceso Restringido")
-    st.markdown("### Protocolo de Cifrado y Seguridad de Datos Corporativos")
-    st.info("Plataforma Global Homologada para Auditoría de Entidades Públicas y Privadas.")
+if st.session_state.user_logged is None:
+    t1, t2, t3 = st.tabs(["🔒 Iniciar Sesión", "🏢 Registrar Empresa y Auditor", "🔑 Recuperar Acceso"])
     
-    password_input = st.text_input("Introduzca la Clave Maestra de Infraestructura:", type="password")
-    if st.button("Validar Credenciales y Firmar Token de Sesión"):
-        if password_input == CLAVE_MAESTRA:
-            st.session_state.autenticado = True
-            st.success("Token de acceso firmado. Inicializando motores matemáticos...")
-            st.rerun()
-        else:
-            st.error("Acceso Denegado. Credenciales inválidas o revocadas por el oficial de seguridad.")
+    with t1:
+        st.subheader("Acceso Seguro Enterprise")
+        user_input = st.text_input("Correo Electrónico Corporativo:")
+        pass_input = st.text_input("Contraseña de Acceso:", type="password")
+        if st.button("Autenticar en Servidor"):
+            if user_input in st.session_state.db_usuarios and st.session_state.db_usuarios[user_input]["clave"] == pass_input:
+                usr_data = st.session_state.db_usuarios[user_input]
+                st.session_state.user_logged = user_input
+                st.session_state.user_rol = usr_data["rol"]
+                st.session_state.user_empresa = usr_data["empresa_id"]
+                st.success(f"Token Validado. Bienvenido {usr_data['nombre']}")
+                st.rerun()
+            else:
+                st.error("Credenciales de seguridad incorrectas.")
+                
+    with t2:
+        st.subheader("Crear Cuenta Multiempresa (Prueba Gratuita 10 Días)")
+        with st.form("form_registro"):
+            rnc_new = st.text_input("RNC / Identificación Fiscal de la Empresa:")
+            nombre_emp_new = st.text_input("Nombre o Razón Social Corporativa:")
+            moneda_new = st.selectbox("Moneda de Operación:", ["DOP (RD$)", "USD ($)", "EUR (€)"])
+            st.markdown("---")
+            admin_name = st.text_input("Nombre Completo del Auditor Líder:")
+            admin_email = st.text_input("Correo Electrónico de Usuario:")
+            admin_pass = st.text_input("Definir Contraseña de Acceso:", type="password")
+            admin_tel = st.text_input("Número de WhatsApp / Teléfono:")
+            admin_ced = st.text_input("Cédula / Pasaporte de Identidad:")
+            
+            if st.form_submit_button("Crear Infraestructura Organizacional"):
+                if rnc_new and nombre_emp_new and admin_email and admin_pass:
+                    emp_id = f"EMP-{uuid.uuid4().hex[:3].upper()}"
+                    st.session_state.db_empresas[emp_id] = {"rnc": rnc_new, "nombre": nombre_emp_new, "moneda": moneda_new}
+                    st.session_state.db_usuarios[admin_email] = {"clave": admin_pass, "rol": "Auditor Senior", "nombre": admin_name, "empresa_id": emp_id, "telefono": admin_tel, "identificacion": admin_ced}
+                    st.session_state.db_pagos[emp_id] = False
+                    st.session_state.registro_pruebas[emp_id] = datetime.now()
+                    st.success(f"✓ Empresa registrada con Código Único: {emp_id}. Dispone de 10 días de prueba válida.")
+                    st.rerun()
+                else:
+                    st.error("Por favor, complete todos los campos obligatorios.")
+                    
+    with t3:
+        st.subheader("Motor de Recuperación de Credenciales")
+        tipo_recup = st.selectbox("Buscar por:", ["Correo Electrónico", "WhatsApp / Teléfono", "Cédula de Identidad"])
+        valor_recup = st.text_input("Introduzca el valor de búsqueda:")
+        if st.button("Ejecutar Rastreo"):
+            encontrado = False
+            for email, data in st.session_state.db_usuarios.items():
+                if tipo_recup == "Correo Electrónico" and email == valor_recup: encontrado = data
+                elif tipo_recup == "WhatsApp / Teléfono" and data["telefono"] == valor_recup: encontrado = data
+                elif tipo_recup == "Cédula de Identidad" and data["identificacion"] == valor_recup: encontrado = data
+            if encontrado:
+                st.success(f"🔒 Cuenta localizada.\n\nContraseña: `{encontrado['clave']}`\n\nRol: **{encontrado['rol']}**")
+            else:
+                st.error("No se encontraron registros asociados.")
     st.stop()
 
 # =========================================================================
-# 🗄️ BASE DE DATOS ESTRUCTURAL Y JURISDICCIONAL
+# 💳 VALIDACIÓN DE LICENCIA CORPORATIVA (10 DÍAS DE PRUEBA)
 # =========================================================================
-if 'universo_auditorias' not in st.session_state:
-    st.session_state.universo_auditorias = [
-        {
-            "id": "AUD-2026-001",
-            "jurisdiccion": "República Dominicana 🇩🇴",
-            "tipo_auditoria": "Auditoría Forense y de Investigación",
-            "marco_rector": "Gubernamental RD: Control Interno Sector Público (NOBACI)",
-            "componente": "NOBACI - Actividades de Control",
-            "objeto": "Expedientes de Contratación Pública y Adquisiciones Licitadas",
-            "riesgo": "Crítico",
-            "monto_expuesto": 45000000.0,
-            "estado": "En Ejecución"
-        },
-        {
-            "id": "AUD-2026-002",
-            "jurisdiccion": "República Dominicana 🇩🇴",
-            "tipo_auditoria": "Auditoría Financiera y de Gestión",
-            "marco_rector": "Privado: Financiera y Contable (NIIF / NIC / NIA)",
-            "componente": "Existencia e Integridad de Saldos",
-            "objeto": "Cuentas por Cobrar Comerciales e Instrumentos Financieros",
-            "riesgo": "Alto",
-            "monto_expuesto": 12500000.0,
-            "estado": "Planificado"
-        }
-    ]
+empresa_activa = st.session_state.user_empresa
+rol_activo = st.session_state.user_rol
 
-if 'papeles_trabajo' not in st.session_state:
-    st.session_state.papeles_trabajo = []
-
-PAISES_CONFIG = {
-    "República Dominicana 🇩🇴": {
-        "moneda": "DOP (RD$)", "codigo": "DOP",
-        "leyes": ["Ley 10-07 de la Contraloría General", "NOBACI (Normas Básicas de Control Interno)", "Ley 126-01 de Contabilidad Gubernamental", "Ley 449-06 de Compras y Contrataciones", "Código Tributario Dominicano (Ley 11-92)", "Ley 155-17 contra el Lavado de Activos"]
-    },
-    "Estados Unidos 🇺🇸": {
-        "moneda": "USD ($)", "codigo": "USD",
-        "leyes": ["Sarbanes-Oxley Act (SOX Section 404)", "PCAOB Auditing Standards", "AICPA Statements on Auditing Standards (SAS)", "Foreign Corrupt Practices Act (FCPA)"]
-    },
-    "España 🇪🇸": {
-        "moneda": "EUR (€)", "codigo": "EUR",
-        "leyes": ["Ley 22/2015 de Auditoría de Cuentas", "Real Decreto 2/2021 (Reglamento RAC)", "Código de Comercio Español", "Normas Técnicas de Auditoría del ICAC"]
-    },
-    "México 🇲🇽": {
-        "moneda": "MXN ($)", "codigo": "MXN",
-        "leyes": ["Código Fiscal de la Federación (Art. 52)", "Ley de Fiscalización y Rendición de Cuentas de la Federación", "Normas de Auditoría para Atestiguar (IMCP)"]
-    },
-    "Colombia 🇨🇴": {
-        "moneda": "COP ($)", "codigo": "COP",
-        "leyes": ["Ley 43 de 1990", "Decreto Único Reglamentario 2420 de 2015", "Estatuto Tributario Nacional", "Circular Externa Superintendencia Financiera"]
-    }
-}
-
-MARCOS_MASTER = {
-    "Privado: Financiera y Contable (NIIF / NIC / NIA)": ["Existencia e Integridad de Saldos", "Valuación de Activos y Pasivos", "Reconocimiento de Ingresos", "Revelaciones en Notas Contables"],
-    "Público: Gubernamental y de Gestión (NICSP / INTOSAI)": ["Ejecución Presupuestaria y Fondos Públicos", "Cuenta General de la República", "Transparencia y Rendición de Cuentas"],
-    "Estructural: Control Interno Orgánico (COSO Framework)": ["Ambiente de Control", "Evaluación de Riesgos", "Actividades de Control", "Información y Comunicación", "Supervisión"],
-    "Gubernamental RD: Control Interno Sector Público (NOBACI)": ["NOBACI - Ambiente de Control", "NOBACI - Evaluación de Riesgos", "NOBACI - Actividades de Control", "NOBACI - Información y Comunicación", "NOBACI - Monitoreo"],
-    "Tecnológica: Sistemas de Información (COBIT / ISACA)": ["Seguridad de la Información (Cybersecurity)", "Integridad de Bases de Datos", "Controles Generales de TI (GITCs)", "Segregación de Funciones ERP"],
-    "Cumplimiento: Legal, Fiscal y Regulatorio": ["Cumplimiento Fiscal y Tributario", "Prevención de Lavado de Activos (PLA)", "Contrataciones Públicas / Licitaciones"]
-}
+if rol_activo != "Administrador Global":
+    is_pagado = st.session_state.db_pagos.get(empresa_activa, False)
+    fecha_reg = st.session_state.registro_pruebas.get(empresa_activa, datetime.now())
+    dias_restantes = 10 - (datetime.now() - fecha_reg).days
+    
+    if not is_pagado:
+        if dias_restantes <= 0:
+            st.error("🚨 Período de prueba expirado (Validez: 10 Días). Bloqueo preventivo de seguridad. Active su licencia.")
+            if st.button("💳 Simular Pago de Licencia"):
+                st.session_state.db_pagos[empresa_activa] = True
+                st.success("Pago procesado. Módulos desbloqueados."); st.rerun()
+            st.stop()
+        else:
+            st.warning(f"⏳ Modo de Demostración Activo. Datos guardados en carpeta temporal válida por {dias_restantes} días.")
 
 # =========================================================================
-# 🗺️ ENTORNO DE NAVEGACIÓN Y CONFIGURACIÓN GLOBAL DE USUARIO
+# 🗺️ CONFIGURACIÓN DE CONSOLA MULTIEMPRESA Y FILTROS
 # =========================================================================
-st.sidebar.title("🌐 Configuración Global")
-jurisdiccion_activa = st.sidebar.selectbox("🗺️ Seleccionar Jurisdicción:", list(PAISES_CONFIG.keys()))
-moneda = PAISES_CONFIG[jurisdiccion_activa]["moneda"]
-leyes_regionales = PAISES_CONFIG[jurisdiccion_activa]["leyes"]
+st.sidebar.title("🌐 AuditaCloud Core AI")
+st.sidebar.markdown(f"Usuario: **{st.session_state.user_logged}**\n\nRol: **{rol_activo}**")
+
+if st.sidebar.button("🚪 Cerrar Sesión Segura"):
+    st.session_state.user_logged = None; st.rerun()
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("👤 Credenciales de Acceso")
-rol = st.sidebar.selectbox("Rol Operativo:", ["Socio de Auditoría / Administrador", "Equipo de Enlace Auditado"])
 
-st.sidebar.markdown("---")
-st.sidebar.caption("AuditaCloud v2.0 Enterprise Cloud Core Engine • Cifrado AES-256")
-
-# Enrutamiento de Módulos según Rol
-if rol == "Socio de Auditoría / Administrador":
-    menu = st.sidebar.radio("Módulos de Control:", [
-        "📊 Dashboard de Exposición Financiera",
-        "🎯 Universo y Planificación Estratégica",
-        "🧮 Motor de Inteligencia Financiera y Forense",
-        "📝 Muestreo Estadístico Avanzado (NIA 530)",
-        "📋 Cédulas y Papeles de Trabajo de Investigación",
-        "📥 Consolidación de Dictámenes e Informes"
-    ])
-else:
-    menu = st.sidebar.radio("Módulos de Control:", [
-        "📊 Dashboard de Exposición Financiera",
-        "📋 Cédulas y Papeles de Trabajo de Investigación"
-    ])
-
-# =========================================================================
-# 📊 MÓDULO 1: DASHBOARD DE EXPOSICIÓN FINANCIERA
-# =========================================================================
-if menu == "📊 Dashboard de Exposición Financiera":
-    st.title("📊 Panel Global de Control y Mapeo de Riesgos")
-    st.markdown(f"Jurisdicción Activa: **{jurisdiccion_activa}** | Unidad Monetaria: **{moneda}**")
-    
-    df_audits = pd.DataFrame(st.session_state.universo_auditorias)
-    df_filtrado = df_audits[df_audits['jurisdiccion'] == jurisdiccion_activa] if not df_audits.empty else df_audits
-
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
-        st.metric("Leyes Locales Indexadas", len(leyes_regionales))
-        st.markdown("</div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
-        st.metric("Objetos en Inspección", len(df_filtrado))
-        st.markdown("</div>", unsafe_allow_html=True)
-    with c3:
-        st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
-        total_monto = df_filtrado['monto_expuesto'].sum() if not df_filtrado.empty else 0.0
-        st.metric("Monto Total Bajo Cobertura", f"{moneda} {total_monto:,.2f}")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("---")
-    
-    if not df_filtrado.empty:
-        st.subheader("Análisis de Riesgo Corporativo y Financiero por Objeto")
-        fig = px.bar(df_filtrado, x="objeto", y="monto_expuesto", color="riesgo", text="tipo_auditoria",
-                     labels={'monto_expuesto': f'Valor Muestra ({moneda})', 'objeto': 'Objeto bajo Examen'},
-                     color_discrete_map={"Crítico": "#dc3545", "Alto": "#fd7e14", "Medio": "#ffc107", "Bajo": "#198754"})
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.warning("No se han configurado auditorías o registros de control para esta jurisdicción.")
-
-# ==========================================
-# 🎯 MÓDULO 2: UNIVERSO Y PLANIFICACIÓN ESTRATÉGICA
-# ==========================================
-elif menu == "🎯 Universo y Planificación Estratégica":
-    st.title("🎯 Universo de Auditoría y Modelado de Controles")
-    st.markdown("Definición estructurada del objeto de examen conforme a la tipología contable, tecnológica y legal aplicable.")
-    
-    with st.form("form_planificacion_avanzada"):
-        st.subheader("Cargar Nuevo Enfoque de Auditoría")
+if rol_activo == "Administrador Global":
+    empresa_seleccionada = st.sidebar.selectbox("Inspeccionar Empresa:", list(st.session_state.db_empresas.keys()), format_func=lambda x: st.session_state.db_empresas[x]["nombre"])
