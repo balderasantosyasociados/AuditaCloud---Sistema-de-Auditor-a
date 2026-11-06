@@ -80,7 +80,70 @@ st.markdown("""
 # ================================================================
 # 2. UTILIDADES
 # ================================================================
+def log_event_tx(
+    conn,
+    action,
+    object_type="",
+    object_id="",
+    details="",
+    username="",
+    company_id=""
+):
+    """Registra el evento dentro de la transacción existente."""
 
+    previous = conn.execute(text("""
+        SELECT event_hash
+        FROM event_log
+        ORDER BY id DESC
+        LIMIT 1
+    """)).scalar() or "GENESIS"
+
+    event_id = str(uuid.uuid4())
+    event_time = now_iso()
+
+    payload = "|".join([
+        event_id,
+        event_time,
+        username,
+        company_id or "",
+        action,
+        object_type,
+        object_id,
+        str(details),
+        previous
+    ])
+
+    event_hash = hashlib.sha256(
+        payload.encode("utf-8")
+    ).hexdigest()
+
+    conn.execute(text("""
+        INSERT INTO event_log (
+            event_id, event_time, username,
+            company_id, action, object_type,
+            object_id, details, previous_hash,
+            event_hash
+        )
+        VALUES (
+            :event_id, :event_time, :username,
+            :company_id, :action, :object_type,
+            :object_id, :details, :previous_hash,
+            :event_hash
+        )
+    """), {
+        "event_id": event_id,
+        "event_time": event_time,
+        "username": username,
+        "company_id": company_id or "",
+        "action": action,
+        "object_type": object_type,
+        "object_id": object_id,
+        "details": str(details)[:5000],
+        "previous_hash": previous,
+        "event_hash": event_hash
+    })
+
+    return event_hash
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
