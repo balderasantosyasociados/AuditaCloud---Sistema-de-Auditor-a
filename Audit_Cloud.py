@@ -180,5 +180,7 @@ if menu == "📊 Risk Engine (ISA 315)":
 elif menu == "⚡ Calibración Dinámica de Reglas":
     st.title("⚡ Inyección de Actualizaciones y Reglas Contables CCRD")
     st.markdown("Modifique umbrales de tolerancia de riesgo y cargue nuevos programas normativos de la Ley 18-24 de forma autónoma.")
-    
+
     payload_ejemplo = {
+        "version_paquete": "2.7.4",
+        "programas": {
