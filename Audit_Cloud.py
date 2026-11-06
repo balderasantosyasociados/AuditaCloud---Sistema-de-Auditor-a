@@ -23,35 +23,36 @@ if 'engine_forense' not in st.session_state:
     st.session_state.engine_forense = create_engine("sqlite:///:memory:")
     with st.session_state.engine_forense.connect() as conn:
         conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS libro_mayor (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                entidad TEXT,
-                proveedor_rnc TEXT,
-                nombre_proveedor TEXT,
-                monto REAL,
-                fecha_registro TEXT,
-                usuario_creador TEXT
-            );
+        CREATE TABLE IF NOT EXISTS libro_mayor (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entidad TEXT,
+            proveedor_rnc TEXT,
+            nombre_proveedor TEXT,
+            monto REAL,
+            fecha_registro TEXT,
+            usuario_creador TEXT
+        );
         """))
+        
         # Simulación de patrones reales Big Four y control fiscal Ley 18-24
         datos = [
             ('Ministerio_Demo', '101-00000-1', 'Constructora LVP', 450000.00, '2026-11-01', 'us_contable1'),
-            ('Ministerio_Demo', '101-00000-1', 'Constructora LVP', 450000.00, '2026-11-01', 'us_contable1'),  
-            ('Ministerio_Demo', '101-00000-1', 'Constructora LVP SRL', 449900.00, '2026-11-01', 'us_contable2'), 
+            ('Ministerio_Demo', '101-00000-1', 'Constructora LVP', 450000.00, '2026-11-01', 'us_contable1'),
+            ('Ministerio_Demo', '101-00000-1', 'Constructora LVP SRL', 449900.00, '2026-11-01', 'us_contable2'),
             ('Ministerio_Demo', '102-33333-2', 'Suministros Globales Dominicana', 85100.00, '2026-11-02', 'admin_sys'),
-            ('Ministerio_Demo', '102-33333-2', 'Suministros Globales Dom.', 85100.00, '2026-11-02', 'admin_sys'), 
+            ('Ministerio_Demo', '102-33333-2', 'Suministros Globales Dom.', 85100.00, '2026-11-02', 'admin_sys'),
         ]
         for d in datos:
             conn.execute(text("""
-                INSERT INTO libro_mayor (entidad, proveedor_rnc, nombre_proveedor, monto, fecha_registro, usuario_creador)
-                VALUES (:e, :r, :n, :m, :f, :u);
+            INSERT INTO libro_mayor (entidad, proveedor_rnc, nombre_proveedor, monto, fecha_registro, usuario_creador)
+            VALUES (:e, :r, :n, :m, :f, :u);
             """), {"e": d[0], "r": d[1], "n": d[2], "m": d[3], "f": d[4], "u": d[5]})
-        
+            
         for i in range(1, 150):
             monto_b = float(f"5{i}00.00") if i % 5 == 0 else float(f"{i%9 + 1}250.75")
             conn.execute(text("""
-                INSERT INTO libro_mayor (entidad, proveedor_rnc, nombre_proveedor, monto, fecha_registro, usuario_creador)
-                VALUES ('Ministerio_Demo', '109-99999-9', 'Proveedor General S.A.', :m, '2026-11-05', 'sys_batch');
+            INSERT INTO libro_mayor (entidad, proveedor_rnc, nombre_proveedor, monto, fecha_registro, usuario_creador)
+            VALUES ('Ministerio_Demo', '109-99999-9', 'Proveedor General S.A.', :m, '2026-11-05', 'sys_batch');
             """), {"m": monto_b})
         conn.commit()
 
@@ -89,7 +90,7 @@ if 'universo_auditorias' not in st.session_state:
         {"id": "AUD-001", "empresa_id": "EMP-881", "tipo": "Auditoría Forense y de Investigación", "programa": "PROG-CCRD-1824", "objeto": "Libro Mayor - Control Posterior", "probabilidad": 4, "impacto": 5, "riesgo_score": 20, "estado": "En Ejecución", "monto": 85000000.0}
     ]
 
-if 'cadena_custodia_logs' not in st.session_state: 
+if 'cadena_custodia_logs' not in st.session_state:
     st.session_state.cadena_custodia_logs = []
 
 if 'user_logged' not in st.session_state: st.session_state.user_logged = None
@@ -104,24 +105,42 @@ PROGRAMAS_MASTER = {
 }
 
 # =========================================================================
-# 🔐 CAPA DE AUTENTICACIÓN
+# 🔐 CAPA DE AUTENTICACIÓN (CORREGIDA - SIN ST.STOP INTERNO)
 # =========================================================================
 if st.session_state.user_logged is None:
     t1, t2, t3 = st.tabs(["🔒 Iniciar Sesión", "🏢 Registrar Empresa y Auditor", "🔑 Recuperar Acceso"])
+    
     with t1:
         st.subheader("Acceso Seguro Enterprise")
         user_input = st.text_input("Usuario o Correo Corporativo:")
         pass_input = st.text_input("Contraseña de Acceso:", type="password")
+        
         if st.button("Autenticar en Servidor"):
             if user_input in st.session_state.db_usuarios and st.session_state.db_usuarios[user_input]["clave"] == pass_input:
                 usr_data = st.session_state.db_usuarios[user_input]
                 st.session_state.user_logged = user_input
                 st.session_state.user_rol = usr_data["rol"]
                 st.session_state.user_empresa = usr_data["empresa_id"]
+                
+                # Registrar en cadena de custodia criptográfica
+                log_msg = f"Inicio de sesión exitoso - Usuario: {user_input}"
+                log_hash = hashlib.sha256(log_msg.encode()).hexdigest()
+                st.session_state.cadena_custodia_logs.append({"timestamp": str(datetime.now()), "evento": log_msg, "hash": log_hash})
+                
                 st.success(f"Token Validado. Bienvenido {usr_data['nombre']}")
                 st.rerun()
-            else: 
+            else:
                 st.error("Credenciales de seguridad incorrectas.")
+    
+    with t2:
+        st.subheader("Registro de Nuevas Firmas y Entidades")
+        st.info("Para dar de alta nuevas firmas de auditoría o entidades públicas bajo el marco legal de la CCRD, remita su credencial autorizada.")
+        
+    with t3:
+        st.subheader("Restablecimiento de Token de Seguridad")
+        st.write("Introduzca su correo corporativo registrado para iniciar la verificación criptográfica de identidad.")
+
+    # Detiene la carga de los módulos inferiores si no hay sesión iniciada, de forma segura externa.
     st.stop()
 
 # =========================================================================
@@ -132,6 +151,8 @@ st.sidebar.markdown(f"Usuario: **{st.session_state.user_logged}**\n\nRol: **{st.
 
 if st.sidebar.button("🚪 Cerrar Sesión Segura"):
     st.session_state.user_logged = None
+    st.session_state.user_rol = None
+    st.session_state.user_empresa = None
     st.rerun()
 
 st.sidebar.markdown("---")
@@ -165,20 +186,3 @@ if menu == "📊 Risk Engine (ISA 315)":
         col1, col2, col3 = st.columns(3)
         col1.metric("Focos Auditados Críticos", len(df_filtrado))
         col2.metric("Volumen Financiero Expuesto", f"{moneda_simbolo} {df_filtrado['monto'].sum():,.2f}")
-        col3.metric("Riesgo Promedio", f"{df_filtrado['riesgo_score'].mean():.1f} / 25")
-        
-        st.markdown("---")
-        st.subheader("Mapa de Calor Dinámico de Desviación Financiera")
-        fig = px.scatter(df_filtrado, x="probabilidad", y="impacto", size="monto", color="riesgo_score", text="id", size_max=40, color_continuous_scale=px.colors.sequential.YlOrRd)
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("No existen matrices de riesgo configuradas actualmente.")
-
-# =========================================================================
-# MÓDULO 2: CALIBRACIÓN DINÁMICA DE REGLAS (MIGRATORIO JSON)
-# =========================================================================
-elif menu == "⚡ Calibración Dinámica de Reglas":
-    st.title("⚡ Inyección de Actualizaciones y Reglas Contables CCRD")
-    st.markdown("Modifique umbrales de tolerancia de riesgo y cargue nuevos programas normativos de la Ley 18-24 de forma autónoma.")
-    
-    payload_ejemplo = {
