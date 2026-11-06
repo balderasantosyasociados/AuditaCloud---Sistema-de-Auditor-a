@@ -1,188 +1,166 @@
-# =====================================================================
-# BASA SUPERSISTEMA V27 - REQUISITOS UNIVERSALES DE PRODUCCIÓN
-# Arquitectura Core, Automatización Big Four (ADA) y Ley 18-24 CCRD
-# =====================================================================
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import numpy as np
 import io
-import math
-import uuid
-import json
-import hashlib
 from datetime import datetime
-from sqlalchemy import create_engine, text
 
-# =========================================================================
-# ⚙️ CONFIGURACIÓN DE INFRAESTRUCTURA Y CAPA DE DATOS CONEXA
-# =========================================================================
-st.set_page_config(page_title="AuditaCloud Matrix AI V27 - Big Four Suite", layout="wide", page_icon="🌐")
+# Configuración de la página
+st.set_page_config(page_title="AuditaCloud Global Autonomous AI", layout="wide", page_icon="🌐")
 
-if 'engine_forense' not in st.session_state:
-    st.session_state.engine_forense = create_engine("sqlite:///:memory:")
-    with st.session_state.engine_forense.connect() as conn:
-        conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS libro_mayor (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            entidad TEXT,
-            proveedor_rnc TEXT,
-            nombre_proveedor TEXT,
-            monto REAL,
-            fecha_registro TEXT,
-            usuario_creador TEXT
-        );
-        """))
-        
-        # Simulación de patrones reales Big Four y control fiscal Ley 18-24
-        datos = [
-            ('Ministerio_Demo', '101-00000-1', 'Constructora LVP', 450000.00, '2026-11-01', 'us_contable1'),
-            ('Ministerio_Demo', '101-00000-1', 'Constructora LVP', 450000.00, '2026-11-01', 'us_contable1'),
-            ('Ministerio_Demo', '101-00000-1', 'Constructora LVP SRL', 449900.00, '2026-11-01', 'us_contable2'),
-            ('Ministerio_Demo', '102-33333-2', 'Suministros Globales Dominicana', 85100.00, '2026-11-02', 'admin_sys'),
-            ('Ministerio_Demo', '102-33333-2', 'Suministros Globales Dom.', 85100.00, '2026-11-02', 'admin_sys'),
-        ]
-        for d in datos:
-            conn.execute(text("""
-            INSERT INTO libro_mayor (entidad, proveedor_rnc, nombre_proveedor, monto, fecha_registro, usuario_creador)
-            VALUES (:e, :r, :n, :m, :f, :u);
-            """), {"e": d[0], "r": d[1], "n": d[2], "m": d[3], "f": d[4], "u": d[5]})
-            
-        for i in range(1, 150):
-            monto_b = float(f"5{i}00.00") if i % 5 == 0 else float(f"{i%9 + 1}250.75")
-            conn.execute(text("""
-            INSERT INTO libro_mayor (entidad, proveedor_rnc, nombre_proveedor, monto, fecha_registro, usuario_creador)
-            VALUES ('Ministerio_Demo', '109-99999-9', 'Proveedor General S.A.', :m, '2026-11-05', 'sys_batch');
-            """), {"m": monto_b})
-        conn.commit()
-
-# Inicialización de bases de datos de sesión persistentes
-if 'db_empresas' not in st.session_state:
-    st.session_state.db_empresas = {
-        "EMP-881": {"rnc": "101-00123-4", "nombre": "Corporación Dominicana Beta", "moneda": "DOP (RD$)"},
-        "EMP-992": {"rnc": "102-45678-9", "nombre": "Consorcio Financiero Global SA", "moneda": "USD ($)"}
-    }
-
-if 'db_usuarios' not in st.session_state:
-    st.session_state.db_usuarios = {
-        "admin@auditacloud.com": {"clave": "AuditAdmin2026*", "rol": "Administrador Global", "nombre": "Oficial Master AI", "empresa_id": "Todas", "telefono": "8095551234", "identificacion": "001-0000000-1"},
-        "admin": {"clave": "AuditAdmin2026*", "rol": "Administrador Global", "nombre": "Oficial Master AI", "empresa_id": "Todas", "telefono": "8095551234", "identificacion": "001-0000000-1"}
-    }
-
-if 'programas_b4_activos' not in st.session_state:
-    st.session_state.programas_b4_activos = {
-        "PROG-EF-01": {
-            "nombre": "Auditoría de Estados Financieros y Erogaciones",
-            "normativa": "ISA 315 (Revised) / IFRS 18 / DISE ASU 2024-03",
-            "tolerancia_desviacion": 0.05,
-            "automatizaciones": ["BENFORD_LAW", "FUZZY_DUPLICATES", "SPLIT_PAYMENTS"]
-        },
-        "PROG-CCRD-1824": {
-            "nombre": "Control Fiscal Posterior y Legalidad Institucional",
-            "normativa": "Ley núm. 18-24 de la Cámara de Cuentas de la República Dominicana",
-            "tolerancia_desviacion": 0.02,
-            "automatizaciones": ["CONTRATACIONES_FRACCIONADAS", "NOMINA_PROVEEDOR_CROSS"]
-        }
-    }
-
-if 'universo_auditorias' not in st.session_state:
-    st.session_state.universo_auditorias = [
-        {"id": "AUD-001", "empresa_id": "EMP-881", "tipo": "Auditoría Forense y de Investigación", "programa": "PROG-CCRD-1824", "objeto": "Libro Mayor - Control Posterior", "probabilidad": 4, "impacto": 5, "riesgo_score": 20, "estado": "En Ejecución", "monto": 85000000.0}
-    ]
-
-if 'cadena_custodia_logs' not in st.session_state:
-    st.session_state.cadena_custodia_logs = []
-
-if 'user_logged' not in st.session_state: st.session_state.user_logged = None
-if 'user_rol' not in st.session_state: st.session_state.user_rol = None
-if 'user_empresa' not in st.session_state: st.session_state.user_empresa = None
-
-PROGRAMAS_MASTER = {
-    "Auditoría Financiera Corporativa (NIA/NIIF)": ["Auditoría de Efectivo y Equivalentes de Efectivo", "Auditoría de Cuentas por Cobrar e Ingresos Ordinarios"],
-    "Auditoría Forense Avanzada (ACFE)": ["Investigación de Fraude en Adquisiciones y Compras", "Rastreo de Malversación de Activos"],
-    "Auditoría Gubernamental (Gubernamental/NOBACI RD)": ["Auditoría de Cumplimiento de Normas Básicas de Control Interno (NOBACI)"],
-    "Auditoría de Sistemas y TI (COBIT/ISACA)": ["Auditoría de Seguridad Lógica y Controles de Acceso ERP"]
+# --- BASE DE DATOS GLOBAL Y LOCALIZACIÓN SIMULADA ---
+PAISES_CONFIG = {
+    "Estados Unidos": {"moneda": "USD ($)", "idioma": "English / Español", "leyes": ["SOX Act Section 404", "AICPA SAS", "GAAS"]},
+    "España": {"moneda": "EUR (€)", "idioma": "Español", "leyes": ["Ley 22/2015 de Auditoría de Cuentas", "Código de Comercio"]},
+    "México": {"moneda": "MXN ($)", "idioma": "Español", "leyes": ["Código Fiscal de la Federación Art. 52", "NIF (CINIF)"]},
+    "Colombia": {"moneda": "COP ($)", "idioma": "Español", "leyes": ["Ley 43 de 1990", "Decreto Único Reglamentario 2420"]},
+    "Argentina": {"moneda": "ARS ($)", "idioma": "Español", "leyes": ["Ley 20.488", "Resolución Técnica FACPCE N° 37"]},
+    "Chile": {"moneda": "CLP ($)", "idioma": "Español", "leyes": ["Ley N° 18.046 de Sociedades Anónimas", "Normas de la CMF"]}
 }
 
-# =========================================================================
-# 🔐 CAPA DE AUTENTICACIÓN (CORREGIDA - SIN ST.STOP INTERNO)
-# =========================================================================
-if st.session_state.user_logged is None:
-    t1, t2, t3 = st.tabs(["🔒 Iniciar Sesión", "🏢 Registrar Empresa y Auditor", "🔑 Recuperar Acceso"])
-    
-    with t1:
-        st.subheader("Acceso Seguro Enterprise")
-        user_input = st.text_input("Usuario o Correo Corporativo:")
-        pass_input = st.text_input("Contraseña de Acceso:", type="password")
-        
-        if st.button("Autenticar en Servidor"):
-            if user_input in st.session_state.db_usuarios and st.session_state.db_usuarios[user_input]["clave"] == pass_input:
-                usr_data = st.session_state.db_usuarios[user_input]
-                st.session_state.user_logged = user_input
-                st.session_state.user_rol = usr_data["rol"]
-                st.session_state.user_empresa = usr_data["empresa_id"]
-                
-                # Registrar en cadena de custodia criptográfica
-                log_msg = f"Inicio de sesión exitoso - Usuario: {user_input}"
-                log_hash = hashlib.sha256(log_msg.encode()).hexdigest()
-                st.session_state.cadena_custodia_logs.append({"timestamp": str(datetime.now()), "evento": log_msg, "hash": log_hash})
-                
-                st.success(f"Token Validado. Bienvenido {usr_data['nombre']}")
-                st.rerun()
-            else:
-                st.error("Credenciales de seguridad incorrectas.")
-    
-    with t2:
-        st.subheader("Registro de Nuevas Firmas y Entidades")
-        st.info("Para dar de alta nuevas firmas de auditoría o entidades públicas bajo el marco legal de la CCRD, remita su credencial autorizada.")
-        
-    with t3:
-        st.subheader("Restablecimiento de Token de Seguridad")
-        st.write("Introduzca su correo corporativo registrado para iniciar la verificación criptográfica de identidad.")
+if 'audits' not in st.session_state:
+    st.session_state.audits = [
+        {"id": "AUD-001", "tipo": "Financiera y de Gestión", "proceso": "Tesorería y Caja", "riesgo": "Alto", "normativa": "SOX / INTOSAI P-10", "moneda": "USD", "monto": 1500000},
+        {"id": "AUD-002", "tipo": "Forense", "proceso": "Nómina y Viáticos", "riesgo": "Crítico", "normativa": "Ley Local / ACFE", "moneda": "USD", "monto": 450000}
+    ]
 
-    # Detiene la carga de los módulos inferiores si no hay sesión iniciada, de forma segura externa.
-    st.stop()
-
-# =========================================================================
-# 🗺️ CONSOLA MULTIEMPRESA INTERACTIVA
-# =========================================================================
-st.sidebar.title("🌐 AuditaCloud Matrix V27")
-st.sidebar.markdown(f"Usuario: **{st.session_state.user_logged}**\n\nRol: **{st.session_state.user_rol}**")
-
-if st.sidebar.button("🚪 Cerrar Sesión Segura"):
-    st.session_state.user_logged = None
-    st.session_state.user_rol = None
-    st.session_state.user_empresa = None
-    st.rerun()
+# --- LOCALIZACIÓN DINÁMICA POR EL USUARIO ---
+st.sidebar.title("🌐 Configuración Global Autónoma")
+pais_sel = st.sidebar.selectbox("🗺️ Seleccionar País de Operación:", list(PAISES_CONFIG.keys()))
+moneda_simbolo = PAISES_CONFIG[pais_sel]["moneda"]
+leyes_vigentes = PAISES_CONFIG[pais_sel]["leyes"]
 
 st.sidebar.markdown("---")
+st.sidebar.subheader("👤 Control de Acceso Localizado")
+rol_usuario = st.sidebar.selectbox("Seleccione su Rol:", ["Auditor Líder (Admin)", "Auditado / Enlace Técnico"])
 
-if st.session_state.user_rol == "Administrador Global":
-    empresa_seleccionada = st.sidebar.selectbox("Inspeccionar Empresa:", list(st.session_state.db_empresas.keys()), format_func=lambda x: st.session_state.db_empresas[x]["nombre"])
-    moneda_simbolo = st.session_state.db_empresas[empresa_seleccionada]["moneda"]
+# Definición de Módulos
+if rol_usuario == "Auditor Líder (Admin)":
+    menu = st.sidebar.radio("Módulos:", ["📊 Dashboard e Indicadores", "🧮 Motor de Fórmulas Automatizadas", "📝 Ejecución y Leyes Locales", "📥 Descarga de Informes"])
 else:
-    empresa_seleccionada = st.session_state.user_empresa
-    moneda_simbolo = st.session_state.db_empresas[empresa_seleccionada]["moneda"]
+    menu = st.sidebar.radio("Módulos:", ["📊 Dashboard e Indicadores", "📝 Ejecución y Leyes Locales"])
 
-menu = st.sidebar.radio("Módulos de Control Avanzado:", [
-    "📊 Risk Engine (ISA 315)",
-    "⚡ Calibración Dinámica de Reglas",
-    "🎯 Catálogo de Programas y Dependencias",
-    "🧮 Big Four Analytics Engine (ADA)",
-    "📜 Cadena de Custodia Criptográfica"
-])
+# ==========================================
+# MÓDULO 1: DASHBOARD GLOBAL
+# ==========================================
+if menu == "📊 Dashboard e Indicadores":
+    st.title("📊 Panel de Control y Analítica de Control Interno")
+    st.markdown(f"Jurisdicción seleccionada: **{pais_sel}** | Moneda de Reporte: **{moneda_simbolo}**")
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Leyes Locales Activas en el Motor", len(leyes_vigentes), help=", ".join(leyes_vigentes))
+    col2.metric("Auditorías en Curso", len(st.session_state.audits))
+    col3.metric("Monto Total Bajo Muestreo", f"{moneda_simbolo} {sum([a['monto'] for a in st.session_state.audits]):,}")
 
-# =========================================================================
-# MÓDULO 1: RISK ENGINE (ISA 315)
-# =========================================================================
-if menu == "📊 Risk Engine (ISA 315)":
-    st.title("📊 Central Risk Engine (Monitoreo Continuo ISA 315)")
-    st.markdown(f"Entidad Analizada: **{st.session_state.db_empresas[empresa_seleccionada]['nombre']}**")
+    st.markdown("---")
+    st.subheader("Distribución de Riesgos del Universo de Auditoría")
+    df_audits = pd.DataFrame(st.session_state.audits)
+    fig = px.bar(df_audits, x="tipo", y="monto", color="riesgo", title="Exposición Financiera por Tipo de Auditoría")
+    st.plotly_chart(fig, use_container_width=True)
+
+# ==========================================
+# MÓDULO 2: MOTOR DE FÓRMULAS AUTOMATIZADAS
+# ==========================================
+elif menu == "🧮 Motor de Fórmulas Automatizadas":
+    st.title("🧮 Motor de Fórmulas y Ratios Automatizados")
+    st.markdown("Cálculos científicos paramétricos basados en las metodologías de los órganos rectores internacionales.")
+
+    tipo_auditoria = st.selectbox("Seleccione la Disciplina de Auditoría a Ejecutar:", 
+                                  ["Auditoría Financiera y de Gestión", "Auditoría de Riesgo", "Auditoría de Cumplimiento", "Auditoría Forense / Especial"])
+
+    st.markdown("---")
+
+    if tipo_auditoria == "Auditoría Financiera y de Gestión":
+        st.subheader("📊 Ratios de Gestión e Índices de Liquidez (IFAC / Órganos Rectores)")
+        c1, c2 = st.columns(2)
+        with c1:
+            activo_circ = st.number_input(f"Activo Circulante ({moneda_simbolo}):", min_value=1.0, value=500000.0)
+            pasivo_circ = st.number_input(f"Pasivo Circulante ({moneda_simbolo}):", min_value=1.0, value=250000.0)
+            ratio_liquidez = activo_circ / pasivo_circ
+        with c2:
+            st.metric("Índice de Liquidez Corriente", f"{ratio_liquidez:.2f}")
+            if ratio_liquidez < 1.0:
+                st.error("🚨 Alerta de Gestión: El índice es menor a 1. Riesgo de insolvencia operativa a corto plazo.")
+            elif ratio_liquidez > 2.0:
+                st.warning("⚠️ Alerta de Gestión: Capital de trabajo ocioso. Posible ineficiencia en la asignación de recursos.")
+            else:
+                st.success("✅ Estabilidad Financiera: Ratio dentro del rango óptimo internacional (1.5 - 2.0).")
+
+    elif tipo_auditoria == "Auditoría de Riesgo":
+        st.subheader("🎯 Cálculo Matemático de Riesgo Inherente y Residual (ISO 31000 / COSO)")
+        c1, c2 = st.columns(2)
+        with c1:
+            prob = st.slider("Probabilidad de Ocurrencia (1 a 5):", 1, 5, 3)
+            imp = st.slider("Impacto Financiero u Operativo (1 a 5):", 1, 5, 4)
+            mitigacion = st.slider("Efectividad de Controles de Mitigación (%):", 0, 100, 60)
+            
+            riesgo_inherente = prob * imp
+            riesgo_residual = riesgo_inherente * (1 - (mitigacion / 100))
+        with c2:
+            st.metric("Score Riesgo Inherente", f"{riesgo_inherente} / 25")
+            st.metric("Score Riesgo Residual Anualizado", f"{riesgo_residual:.2f} / 25")
+            if riesgo_residual > 12:
+                st.error("🚨 Riesgo Fuera de Tolerancia: Requiere intervención prioritaria e inclusión inmediata en el Plan Anual.")
+            else:
+                st.success("✅ Riesgo Aceptable: Mitigación dentro del umbral de apetito al riesgo de la organización.")
+
+    elif tipo_auditoria == "Auditoría de Cumplimiento":
+        st.subheader("⚖️ Índice de Severidad de Incumplimiento Normativo (INTOSAI)")
+        c1, c2 = st.columns(2)
+        with c1:
+            controles_totales = st.number_input("Total de Controles Clave Evaluados:", min_value=1, value=50)
+            controles_fallidos = st.number_input("Total de Controles No Cumplidos / Fallidos:", min_value=0, value=8)
+            tasa_incumplimiento = (controles_fallidos / controles_totales) * 100
+        with c2:
+            st.metric("Tasa de Incumplimiento Regulatorio", f"{tasa_incumplimiento:.2f}%")
+            if tasa_incumplimiento > 10.0:
+                st.error("🚨 Brecha de Cumplimiento Crítica: Supera el límite permisible para la normativa.")
+            else:
+                st.success("✅ Cumplimiento Regulatorio Conforme.")
+
+    elif tipo_auditoria == "Auditoría Forense / Especial":
+        st.subheader("🕵️ Algoritmo de Detección de Anomalías Numéricas (Ley de Benford)")
+        datos_ejemplo = st.text_area("Inserte los primeros dígitos de la muestra de transacciones (Separados por coma):", "1,2,1,4,5,1,1,2,3,9,8,1,2,7,1,1,3")
+        try:
+            lista_digitos = [int(x.strip()) for x in datos_ejemplo.split(",") if x.strip().isdigit()]
+            total_digitos = len(lista_digitos)
+            unos = lista_digitos.count(1)
+            porcentaje_unos = (unos / total_digitos) * 100 if total_digitos > 0 else 0
+            st.metric("Frecuencia del Dígito '1' en la Muestra", f"{porcentaje_unos:.1f}%")
+            if abs(porcentaje_unos - 30.1) > 10.0:
+                st.error("🚨 Alerta Forense: La distribución numérica diverge significativamente de la Ley de Benford.")
+            else:
+                st.success("✅ Consistencia Numérica Estándar.")
+        except:
+            st.warning("Use números válidos del 1 al 9 separados por comas.")
+
+# ==========================================
+# MÓDULO 3: EJECUCIÓN Y LEYES VIGENTES
+# ==========================================
+elif menu == "📝 Ejecución y Leyes Locales":
+    st.title("📜 Ejecución Autónoma con Alineación de Marco Legal Nacional")
+    st.info(f"Marco Jurídico Cargado para **{pais_sel}**: {', '.join(leyes_vigentes)}")
+    with st.form("form_ejec"):
+        ley_afectada = st.selectbox("Seleccione el cuerpo legal aplicable al Hallazgo:", leyes_vigentes + ["Norma Internacional Transversal"])
+        detalles_hallazgo = st.text_area("Describa la condición o evidencia encontrada en el trabajo de campo:")
+        if st.form_submit_button("Sellar y Almacenar Papel de Trabajo"):
+            st.success(f"✓ Hallazgo blindado legalmente bajo el marco: {ley_afectada}.")
+
+# ==========================================
+# MÓDULO 4: DOWNLOAD DE REPORTES
+# ==========================================
+elif menu == "📥 Descarga de Informes":
+    st.title("📥 Descarga de Informes de Auditoría Multidivisa")
+    buffer = io.BytesIO()
+    df_export = pd.DataFrame(st.session_state.audits)
+    df_export["País_Jurisdicción"] = pais_sel
+    df_export["Moneda_Local"] = moneda_simbolo
     
-    df_audits = pd.DataFrame(st.session_state.universo_auditorias)
-    df_filtrado = df_audits[df_audits['empresa_id'] == empresa_seleccionada] if not df_audits.empty else pd.DataFrame()
-    
-    if not df_filtrado.empty:
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Focos Auditados Críticos", len(df_filtrado))
-        col2.metric("Volumen Financiero Expuesto", f"{moneda_simbolo} {df_filtrado['monto'].sum():,.2f}")
+    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+        df_export.to_excel(writer, sheet_name='Reporte_Global_Autónomo', index=False)
+        
+    st.download_button(
+        label=f"📥 Descargar Informes consolidados de {pais_sel} (.xlsx)",
+        data=buffer.getvalue(),
+        file_name=f"Informe_Autonomo_{pais_sel}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
