@@ -1,30 +1,3 @@
-# =====================================================================
-# BASA SUPERSISTEMA V27 - REQUISITOS UNIVERSALES DE PRODUCCIÓN
-# Arquitectura Core y Módulos de Inteligencia Forense Autónoma
-# =====================================================================
-import sys
-import subprocess
-import importlib
-
-# Lista de módulos críticos para verificación automatizada e instalación en caliente
-DEPENDENCIAS_HOT_RELOAD = [
-    ("streamlit", "streamlit>=1.40.0,<=1.45.0"),
-    ("sqlalchemy", "SQLAlchemy>=2.0.0,<2.1.0"),
-    ("fastapi", "fastapi>=0.115.0"),
-    ("cryptography", "cryptography>=43.0.0"),
-    ("lxml", "lxml>=5.3.0"),
-    ("pydantic", "pydantic>=2.8.0,<3.0.0"),
-    ("dotenv", "python-dotenv>=1.0.0")
-]
-
-for modulo, paquete in DEPENDENCIAS_HOT_RELOAD:
-    try:
-        importlib.import_module(modulo)
-    except ImportError:
-        # Inyección y actualización en caliente sin caída de servidor
-        subprocess.check_call([sys.executable, "-m", "pip", "install", paquete])
-
-# --- Importaciones Estándar de la Suite Core ---
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -40,7 +13,7 @@ from sqlalchemy import create_engine, text
 # =========================================================================
 # ⚙️ CONFIGURACIÓN DE INFRAESTRUCTURA DE INTERFAZ (BIG 4 COMPLIANT)
 # =========================================================================
-st.set_page_config(page_title="AuditaCloud Matrix AI V27 - Enterprise Suite", layout="wide", page_icon="🌐")
+st.set_page_config(page_title="AuditaCloud Matrix AI - Corporate Suite", layout="wide", page_icon="🌐")
 
 # Instanciación y persistencia del motor in-memory SQL (AUDIT-INTEL)
 if 'engine_forense' not in st.session_state:
@@ -55,6 +28,7 @@ if 'engine_forense' not in st.session_state:
                 rnc_cedula TEXT
             );
         """))
+        # Inyección de transacciones de prueba (Duplicados y Benford)
         valores = [
             ('Proveedor Alfa', 15000.00, '2026-11-01', '101-00000-1'),
             ('Proveedor Alfa', 15000.00, '2026-11-01', '101-00000-1'),  
@@ -76,7 +50,7 @@ if 'engine_forense' not in st.session_state:
             """), {"p": val[0], "m": val[1], "f": val[2], "r": val[3]})
         conn.commit()
 
-# Inicialización de bases de datos de sesión persistentes
+# Inicialización de bases de datos relacionales en memoria persistente de sesión
 if 'db_empresas' not in st.session_state:
     st.session_state.db_empresas = {
         "EMP-881": {"rnc": "101-00123-4", "nombre": "Corporación Dominicana Beta", "moneda": "DOP (RD$)"},
@@ -132,7 +106,7 @@ if st.session_state.user_logged is None:
 # =========================================================================
 # 🗺️ CONSOLA MULTIEMPRESA INTERACTIVA
 # =========================================================================
-st.sidebar.title("🌐 AuditaCloud Matrix V27")
+st.sidebar.title("🌐 AuditaCloud Core AI")
 st.sidebar.markdown(f"Usuario: **{st.session_state.user_logged}**\n\nRol: **{st.session_state.user_rol}**")
 
 if st.sidebar.button("🚪 Cerrar Sesión Segura"):
@@ -176,7 +150,7 @@ if menu == "📊 Tablero e Indicadores de Riesgo":
         fig = px.scatter(df_filtrado, x="probabilidad", y="impacto", size="monto", color="riesgo_score", text="id", size_max=40, color_continuous_scale=px.colors.sequential.YlOrRd)
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("No hay programas o análisis registrados todavía.")
+        st.info("No hay programas o análisis registrados todavía para esta organización.")
 
 # ==========================================
 # MÓDULO 2: CATÁLOGOS Y PROGRAMAS
@@ -190,3 +164,20 @@ elif menu == "🎯 Catálogo de Programas y Dependencias":
         tipo_aud = st.selectbox("Tipo de Marco Metodológico:", list(PROGRAMAS_MASTER.keys()))
         prog_det = st.selectbox("Seleccione el Programa Específico:", PROGRAMAS_MASTER[tipo_aud])
         objeto_det = st.text_input("Cuenta Analítica / Proceso Exacto a Evaluar:")
+        monto_det = st.number_input(f"Monto Total Expuesto ({moneda_simbolo}):", min_value=0.0, value=50000.0)
+        prob = st.slider("Probabilidad (1-5):", 1, 5, 3)
+        imp = st.slider("Impacto (1-5):", 1, 5, 3)
+        
+        if st.form_submit_button("Sellar e Indexar Programa"):
+            if objeto_det:
+                st.session_state.universo_auditorias.append({
+                    "id": f"AUD-{len(st.session_state.universo_auditorias)+1:03d}", "empresa_id": empresa_seleccionada, "tipo": tipo_aud, "programa": prog_det,
+                    "dependencia": "Ninguna", "objeto": objeto_det, "probabilidad": prob, "impacto": imp, "riesgo_score": prob*imp, "estado": "Planificado", "monto": monto_det
+                })
+                st.success("✓ Programa guardado dentro del mapa relacional."); st.rerun()
+                
+    if not df_filtrado.empty:
+        st.dataframe(df_filtrado[['id', 'tipo', 'programa', 'objeto', 'riesgo_score', 'estado']], use_container_width=True)
+
+# ==========================================
+# MÓDULO 3: MOTOR FORENSE AVANZADO
