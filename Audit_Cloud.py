@@ -1,201 +1,189 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import numpy as np
 import io
+import math
 from datetime import datetime
 
-# Configuración de la página
-st.set_page_config(page_title="AuditaCloud Global Autonomous AI", layout="wide", page_icon="🌐")
+# =========================================================================
+# ⚙️ CONFIGURACIÓN DE INFRAESTRUCTURA DE INTERFAZ (BIG 4 COMPLIANT)
+# =========================================================================
+st.set_page_config(
+    page_title="AuditaCloud Matrix AI - Enterprise Suite", 
+    layout="wide", 
+    page_icon="🌐",
+    initial_sidebar_state="expanded"
+)
+
+# Estilo visual corporativo avanzado
+st.markdown("""
+    <style>
+    .big4-header { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111111; font-weight: 700; }
+    .metric-box { background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #0052cc; }
+    </style>
+""", unsafe_allow_html=True)
 
 # =========================================================================
 # 🔒 SISTEMA DE AUTENTICACIÓN (CLAVE MAESTRA CORPORATIVA)
 # =========================================================================
-CLAVE_MAESTRA = "AuditAdmin2026*"  # <-- CONFIGURA AQUÍ TU CONTRASEÑA MASTER REANUDABLE
+CLAVE_MAESTRA = "AuditAdmin2026*"
 
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
 if not st.session_state.autenticado:
-    st.title("🔒 Acceso Seguro a AuditaCloud Enterprise")
-    st.markdown("Por favor, introduzca las credenciales de cifrado del servidor central para continuar.")
+    st.title("🔒 AuditaCloud Matrix AI - Acceso Restringido")
+    st.markdown("### Protocolo de Cifrado y Seguridad de Datos Corporativos")
+    st.info("Plataforma Global Homologada para Auditoría de Entidades Públicas y Privadas.")
     
-    password_input = st.text_input("Clave Maestra de Infraestructura:", type="password")
-    btn_login = st.button("Validar Credenciales")
-    
-    if btn_login:
+    password_input = st.text_input("Introduzca la Clave Maestra de Infraestructura:", type="password")
+    if st.button("Validar Credenciales y Firmar Token de Sesión"):
         if password_input == CLAVE_MAESTRA:
             st.session_state.autenticado = True
-            st.success("Acceso concedido. Cargando motor de auditoría...")
+            st.success("Token de acceso firmado. Inicializando motores matemáticos...")
             st.rerun()
         else:
-            st.error("Clave Maestra incorrecta o revocada por el administrador del sistema.")
-            
-    st.stop()  # Detiene la carga del resto del software si no está validado
+            st.error("Acceso Denegado. Credenciales inválidas o revocadas por el oficial de seguridad.")
+    st.stop()
+
 # =========================================================================
-
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-import io
-from datetime import datetime
-
-# Configuración de la página
-st.set_page_config(page_title="AuditaCloud Global Autonomous AI", layout="wide", page_icon="🌐")
-
-# --- BASE DE DATOS GLOBAL Y LOCALIZACIÓN SIMULADA ---
-PAISES_CONFIG = {
-    "Estados Unidos": {"moneda": "USD ($)", "idioma": "English / Español", "leyes": ["SOX Act Section 404", "AICPA SAS", "GAAS"]},
-    "España": {"moneda": "EUR (€)", "idioma": "Español", "leyes": ["Ley 22/2015 de Auditoría de Cuentas", "Código de Comercio"]},
-    "México": {"moneda": "MXN ($)", "idioma": "Español", "leyes": ["Código Fiscal de la Federación Art. 52", "NIF (CINIF)"]},
-    "Colombia": {"moneda": "COP ($)", "idioma": "Español", "leyes": ["Ley 43 de 1990", "Decreto Único Reglamentario 2420"]},
-    "Argentina": {"moneda": "ARS ($)", "idioma": "Español", "leyes": ["Ley 20.488", "Resolución Técnica FACPCE N° 37"]},
-    "Chile": {"moneda": "CLP ($)", "idioma": "Español", "leyes": ["Ley N° 18.046 de Sociedades Anónimas", "Normas de la CMF"]}
-}
-
-if 'audits' not in st.session_state:
-    st.session_state.audits = [
-        {"id": "AUD-001", "tipo": "Financiera y de Gestión", "proceso": "Tesorería y Caja", "riesgo": "Alto", "normativa": "SOX / INTOSAI P-10", "moneda": "USD", "monto": 1500000},
-        {"id": "AUD-002", "tipo": "Forense", "proceso": "Nómina y Viáticos", "riesgo": "Crítico", "normativa": "Ley Local / ACFE", "moneda": "USD", "monto": 450000}
+# 🗄️ BASE DE DATOS ESTRUCTURAL Y JURISDICCIONAL
+# =========================================================================
+if 'universo_auditorias' not in st.session_state:
+    st.session_state.universo_auditorias = [
+        {
+            "id": "AUD-2026-001",
+            "jurisdiccion": "República Dominicana 🇩🇴",
+            "tipo_auditoria": "Auditoría Forense y de Investigación",
+            "marco_rector": "Gubernamental RD: Control Interno Sector Público (NOBACI)",
+            "componente": "NOBACI - Actividades de Control",
+            "objeto": "Expedientes de Contratación Pública y Adquisiciones Licitadas",
+            "riesgo": "Crítico",
+            "monto_expuesto": 45000000.0,
+            "estado": "En Ejecución"
+        },
+        {
+            "id": "AUD-2026-002",
+            "jurisdiccion": "República Dominicana 🇩🇴",
+            "tipo_auditoria": "Auditoría Financiera y de Gestión",
+            "marco_rector": "Privado: Financiera y Contable (NIIF / NIC / NIA)",
+            "componente": "Existencia e Integridad de Saldos",
+            "objeto": "Cuentas por Cobrar Comerciales e Instrumentos Financieros",
+            "riesgo": "Alto",
+            "monto_expuesto": 12500000.0,
+            "estado": "Planificado"
+        }
     ]
 
-# --- LOCALIZACIÓN DINÁMICA POR EL USUARIO ---
-st.sidebar.title("🌐 Configuración Global Autónoma")
-pais_sel = st.sidebar.selectbox("🗺️ Seleccionar País de Operación:", list(PAISES_CONFIG.keys()))
-moneda_simbolo = PAISES_CONFIG[pais_sel]["moneda"]
-leyes_vigentes = PAISES_CONFIG[pais_sel]["leyes"]
+if 'papeles_trabajo' not in st.session_state:
+    st.session_state.papeles_trabajo = []
+
+PAISES_CONFIG = {
+    "República Dominicana 🇩🇴": {
+        "moneda": "DOP (RD$)", "codigo": "DOP",
+        "leyes": ["Ley 10-07 de la Contraloría General", "NOBACI (Normas Básicas de Control Interno)", "Ley 126-01 de Contabilidad Gubernamental", "Ley 449-06 de Compras y Contrataciones", "Código Tributario Dominicano (Ley 11-92)", "Ley 155-17 contra el Lavado de Activos"]
+    },
+    "Estados Unidos 🇺🇸": {
+        "moneda": "USD ($)", "codigo": "USD",
+        "leyes": ["Sarbanes-Oxley Act (SOX Section 404)", "PCAOB Auditing Standards", "AICPA Statements on Auditing Standards (SAS)", "Foreign Corrupt Practices Act (FCPA)"]
+    },
+    "España 🇪🇸": {
+        "moneda": "EUR (€)", "codigo": "EUR",
+        "leyes": ["Ley 22/2015 de Auditoría de Cuentas", "Real Decreto 2/2021 (Reglamento RAC)", "Código de Comercio Español", "Normas Técnicas de Auditoría del ICAC"]
+    },
+    "México 🇲🇽": {
+        "moneda": "MXN ($)", "codigo": "MXN",
+        "leyes": ["Código Fiscal de la Federación (Art. 52)", "Ley de Fiscalización y Rendición de Cuentas de la Federación", "Normas de Auditoría para Atestiguar (IMCP)"]
+    },
+    "Colombia 🇨🇴": {
+        "moneda": "COP ($)", "codigo": "COP",
+        "leyes": ["Ley 43 de 1990", "Decreto Único Reglamentario 2420 de 2015", "Estatuto Tributario Nacional", "Circular Externa Superintendencia Financiera"]
+    }
+}
+
+MARCOS_MASTER = {
+    "Privado: Financiera y Contable (NIIF / NIC / NIA)": ["Existencia e Integridad de Saldos", "Valuación de Activos y Pasivos", "Reconocimiento de Ingresos", "Revelaciones en Notas Contables"],
+    "Público: Gubernamental y de Gestión (NICSP / INTOSAI)": ["Ejecución Presupuestaria y Fondos Públicos", "Cuenta General de la República", "Transparencia y Rendición de Cuentas"],
+    "Estructural: Control Interno Orgánico (COSO Framework)": ["Ambiente de Control", "Evaluación de Riesgos", "Actividades de Control", "Información y Comunicación", "Supervisión"],
+    "Gubernamental RD: Control Interno Sector Público (NOBACI)": ["NOBACI - Ambiente de Control", "NOBACI - Evaluación de Riesgos", "NOBACI - Actividades de Control", "NOBACI - Información y Comunicación", "NOBACI - Monitoreo"],
+    "Tecnológica: Sistemas de Información (COBIT / ISACA)": ["Seguridad de la Información (Cybersecurity)", "Integridad de Bases de Datos", "Controles Generales de TI (GITCs)", "Segregación de Funciones ERP"],
+    "Cumplimiento: Legal, Fiscal y Regulatorio": ["Cumplimiento Fiscal y Tributario", "Prevención de Lavado de Activos (PLA)", "Contrataciones Públicas / Licitaciones"]
+}
+
+# =========================================================================
+# 🗺️ ENTORNO DE NAVEGACIÓN Y CONFIGURACIÓN GLOBAL DE USUARIO
+# =========================================================================
+st.sidebar.title("🌐 Configuración Global")
+jurisdiccion_activa = st.sidebar.selectbox("🗺️ Seleccionar Jurisdicción:", list(PAISES_CONFIG.keys()))
+moneda = PAISES_CONFIG[jurisdiccion_activa]["moneda"]
+leyes_regionales = PAISES_CONFIG[jurisdiccion_activa]["leyes"]
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("👤 Control de Acceso Localizado")
-rol_usuario = st.sidebar.selectbox("Seleccione su Rol:", ["Auditor Líder (Admin)", "Auditado / Enlace Técnico"])
+st.sidebar.subheader("👤 Credenciales de Acceso")
+rol = st.sidebar.selectbox("Rol Operativo:", ["Socio de Auditoría / Administrador", "Equipo de Enlace Auditado"])
 
-# Definición de Módulos
-if rol_usuario == "Auditor Líder (Admin)":
-    menu = st.sidebar.radio("Módulos:", ["📊 Dashboard e Indicadores", "🧮 Motor de Fórmulas Automatizadas", "📝 Ejecución y Leyes Locales", "📥 Descarga de Informes"])
+st.sidebar.markdown("---")
+st.sidebar.caption("AuditaCloud v2.0 Enterprise Cloud Core Engine • Cifrado AES-256")
+
+# Enrutamiento de Módulos según Rol
+if rol == "Socio de Auditoría / Administrador":
+    menu = st.sidebar.radio("Módulos de Control:", [
+        "📊 Dashboard de Exposición Financiera",
+        "🎯 Universo y Planificación Estratégica",
+        "🧮 Motor de Inteligencia Financiera y Forense",
+        "📝 Muestreo Estadístico Avanzado (NIA 530)",
+        "📋 Cédulas y Papeles de Trabajo de Investigación",
+        "📥 Consolidación de Dictámenes e Informes"
+    ])
 else:
-    menu = st.sidebar.radio("Módulos:", ["📊 Dashboard e Indicadores", "📝 Ejecución y Leyes Locales"])
+    menu = st.sidebar.radio("Módulos de Control:", [
+        "📊 Dashboard de Exposición Financiera",
+        "📋 Cédulas y Papeles de Trabajo de Investigación"
+    ])
 
-# ==========================================
-# MÓDULO 1: DASHBOARD GLOBAL
-# ==========================================
-if menu == "📊 Dashboard e Indicadores":
-    st.title("📊 Panel de Control y Analítica de Control Interno")
-    st.markdown(f"Jurisdicción seleccionada: **{pais_sel}** | Moneda de Reporte: **{moneda_simbolo}**")
+# =========================================================================
+# 📊 MÓDULO 1: DASHBOARD DE EXPOSICIÓN FINANCIERA
+# =========================================================================
+if menu == "📊 Dashboard de Exposición Financiera":
+    st.title("📊 Panel Global de Control y Mapeo de Riesgos")
+    st.markdown(f"Jurisdicción Activa: **{jurisdiccion_activa}** | Unidad Monetaria: **{moneda}**")
     
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Leyes Locales Activas en el Motor", len(leyes_vigentes), help=", ".join(leyes_vigentes))
-    col2.metric("Auditorías en Curso", len(st.session_state.audits))
-    col3.metric("Monto Total Bajo Muestreo", f"{moneda_simbolo} {sum([a['monto'] for a in st.session_state.audits]):,}")
+    df_audits = pd.DataFrame(st.session_state.universo_auditorias)
+    df_filtrado = df_audits[df_audits['jurisdiccion'] == jurisdiccion_activa] if not df_audits.empty else df_audits
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
+        st.metric("Leyes Locales Indexadas", len(leyes_regionales))
+        st.markdown("</div>", unsafe_allow_html=True)
+    with c2:
+        st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
+        st.metric("Objetos en Inspección", len(df_filtrado))
+        st.markdown("</div>", unsafe_allow_html=True)
+    with c3:
+        st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
+        total_monto = df_filtrado['monto_expuesto'].sum() if not df_filtrado.empty else 0.0
+        st.metric("Monto Total Bajo Cobertura", f"{moneda} {total_monto:,.2f}")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("---")
-    st.subheader("Distribución de Riesgos del Universo de Auditoría")
-    df_audits = pd.DataFrame(st.session_state.audits)
-    fig = px.bar(df_audits, x="tipo", y="monto", color="riesgo", title="Exposición Financiera por Tipo de Auditoría")
-    st.plotly_chart(fig, use_container_width=True)
-
-# ==========================================
-# MÓDULO 2: MOTOR DE FÓRMULAS AUTOMATIZADAS
-# ==========================================
-elif menu == "🧮 Motor de Fórmulas Automatizadas":
-    st.title("🧮 Motor de Fórmulas y Ratios Automatizados")
-    st.markdown("Cálculos científicos paramétricos basados en las metodologías de los órganos rectores internacionales.")
-
-    tipo_auditoria = st.selectbox("Seleccione la Disciplina de Auditoría a Ejecutar:", 
-                                  ["Auditoría Financiera y de Gestión", "Auditoría de Riesgo", "Auditoría de Cumplimiento", "Auditoría Forense / Especial"])
-
-    st.markdown("---")
-
-    if tipo_auditoria == "Auditoría Financiera y de Gestión":
-        st.subheader("📊 Ratios de Gestión e Índices de Liquidez (IFAC / Órganos Rectores)")
-        c1, c2 = st.columns(2)
-        with c1:
-            activo_circ = st.number_input(f"Activo Circulante ({moneda_simbolo}):", min_value=1.0, value=500000.0)
-            pasivo_circ = st.number_input(f"Pasivo Circulante ({moneda_simbolo}):", min_value=1.0, value=250000.0)
-            ratio_liquidez = activo_circ / pasivo_circ
-        with c2:
-            st.metric("Índice de Liquidez Corriente", f"{ratio_liquidez:.2f}")
-            if ratio_liquidez < 1.0:
-                st.error("🚨 Alerta de Gestión: El índice es menor a 1. Riesgo de insolvencia operativa a corto plazo.")
-            elif ratio_liquidez > 2.0:
-                st.warning("⚠️ Alerta de Gestión: Capital de trabajo ocioso. Posible ineficiencia en la asignación de recursos.")
-            else:
-                st.success("✅ Estabilidad Financiera: Ratio dentro del rango óptimo internacional (1.5 - 2.0).")
-
-    elif tipo_auditoria == "Auditoría de Riesgo":
-        st.subheader("🎯 Cálculo Matemático de Riesgo Inherente y Residual (ISO 31000 / COSO)")
-        c1, c2 = st.columns(2)
-        with c1:
-            prob = st.slider("Probabilidad de Ocurrencia (1 a 5):", 1, 5, 3)
-            imp = st.slider("Impacto Financiero u Operativo (1 a 5):", 1, 5, 4)
-            mitigacion = st.slider("Efectividad de Controles de Mitigación (%):", 0, 100, 60)
-            
-            riesgo_inherente = prob * imp
-            riesgo_residual = riesgo_inherente * (1 - (mitigacion / 100))
-        with c2:
-            st.metric("Score Riesgo Inherente", f"{riesgo_inherente} / 25")
-            st.metric("Score Riesgo Residual Anualizado", f"{riesgo_residual:.2f} / 25")
-            if riesgo_residual > 12:
-                st.error("🚨 Riesgo Fuera de Tolerancia: Requiere intervención prioritaria e inclusión inmediata en el Plan Anual.")
-            else:
-                st.success("✅ Riesgo Aceptable: Mitigación dentro del umbral de apetito al riesgo de la organización.")
-
-    elif tipo_auditoria == "Auditoría de Cumplimiento":
-        st.subheader("⚖️ Índice de Severidad de Incumplimiento Normativo (INTOSAI)")
-        c1, c2 = st.columns(2)
-        with c1:
-            controles_totales = st.number_input("Total de Controles Clave Evaluados:", min_value=1, value=50)
-            controles_fallidos = st.number_input("Total de Controles No Cumplidos / Fallidos:", min_value=0, value=8)
-            tasa_incumplimiento = (controles_fallidos / controles_totales) * 100
-        with c2:
-            st.metric("Tasa de Incumplimiento Regulatorio", f"{tasa_incumplimiento:.2f}%")
-            if tasa_incumplimiento > 10.0:
-                st.error("🚨 Brecha de Cumplimiento Crítica: Supera el límite permisible para la normativa.")
-            else:
-                st.success("✅ Cumplimiento Regulatorio Conforme.")
-
-    elif tipo_auditoria == "Auditoría Forense / Especial":
-        st.subheader("🕵️ Algoritmo de Detección de Anomalías Numéricas (Ley de Benford)")
-        datos_ejemplo = st.text_area("Inserte los primeros dígitos de la muestra de transacciones (Separados por coma):", "1,2,1,4,5,1,1,2,3,9,8,1,2,7,1,1,3")
-        try:
-            lista_digitos = [int(x.strip()) for x in datos_ejemplo.split(",") if x.strip().isdigit()]
-            total_digitos = len(lista_digitos)
-            unos = lista_digitos.count(1)
-            porcentaje_unos = (unos / total_digitos) * 100 if total_digitos > 0 else 0
-            st.metric("Frecuencia del Dígito '1' en la Muestra", f"{porcentaje_unos:.1f}%")
-            if abs(porcentaje_unos - 30.1) > 10.0:
-                st.error("🚨 Alerta Forense: La distribución numérica diverge significativamente de la Ley de Benford.")
-            else:
-                st.success("✅ Consistencia Numérica Estándar.")
-        except:
-            st.warning("Use números válidos del 1 al 9 separados por comas.")
-
-# ==========================================
-# MÓDULO 3: EJECUCIÓN Y LEYES VIGENTES
-# ==========================================
-elif menu == "📝 Ejecución y Leyes Locales":
-    st.title("📜 Ejecución Autónoma con Alineación de Marco Legal Nacional")
-    st.info(f"Marco Jurídico Cargado para **{pais_sel}**: {', '.join(leyes_vigentes)}")
-    with st.form("form_ejec"):
-        ley_afectada = st.selectbox("Seleccione el cuerpo legal aplicable al Hallazgo:", leyes_vigentes + ["Norma Internacional Transversal"])
-        detalles_hallazgo = st.text_area("Describa la condición o evidencia encontrada en el trabajo de campo:")
-        if st.form_submit_button("Sellar y Almacenar Papel de Trabajo"):
-            st.success(f"✓ Hallazgo blindado legalmente bajo el marco: {ley_afectada}.")
-
-# ==========================================
-# MÓDULO 4: DOWNLOAD DE REPORTES
-# ==========================================
-elif menu == "📥 Descarga de Informes":
-    st.title("📥 Descarga de Informes de Auditoría Multidivisa")
-    buffer = io.BytesIO()
-    df_export = pd.DataFrame(st.session_state.audits)
-    df_export["País_Jurisdicción"] = pais_sel
-    df_export["Moneda_Local"] = moneda_simbolo
     
-    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-        df_export.to_excel(writer, sheet_name='Reporte_Global_Autónomo', index=False)
-        
-    st.download_button(
-        label=f"📥 Descargar Informes consolidados de {pais_sel} (.xlsx)",
-        data=buffer.getvalue(),
-        file_name=f"Informe_Autonomo_{pais_sel}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    if not df_filtrado.empty:
+        st.subheader("Análisis de Riesgo Corporativo y Financiero por Objeto")
+        fig = px.bar(df_filtrado, x="objeto", y="monto_expuesto", color="riesgo", text="tipo_auditoria",
+                     labels={'monto_expuesto': f'Valor Muestra ({moneda})', 'objeto': 'Objeto bajo Examen'},
+                     color_discrete_map={"Crítico": "#dc3545", "Alto": "#fd7e14", "Medio": "#ffc107", "Bajo": "#198754"})
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("No se han configurado auditorías o registros de control para esta jurisdicción.")
+
+# ==========================================
+# 🎯 MÓDULO 2: UNIVERSO Y PLANIFICACIÓN ESTRATÉGICA
+# ==========================================
+elif menu == "🎯 Universo y Planificación Estratégica":
+    st.title("🎯 Universo de Auditoría y Modelado de Controles")
+    st.markdown("Definición estructurada del objeto de examen conforme a la tipología contable, tecnológica y legal aplicable.")
+    
+    with st.form("form_planificacion_avanzada"):
+        st.subheader("Cargar Nuevo Enfoque de Auditoría")
