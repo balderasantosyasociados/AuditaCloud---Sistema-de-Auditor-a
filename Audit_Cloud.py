@@ -9,7 +9,7 @@ import importlib
 # Aseguramiento y recarga autónoma de dependencias críticas en caliente
 DEPENDENCIAS_HOT_RELOAD = [
     ("streamlit", "streamlit>=1.40.0,<=1.45.0"),
-    ("starlette", "starlette>=0.46.0,<1.0.0"),  # Resuelve conflicto directo con Streamlit
+    ("starlette", "starlette>=0.46.0,<1.0.0"),  # Resuelve el conflicto estructural con Streamlit
     ("sqlalchemy", "SQLAlchemy>=2.0.0,<2.1.0"),
     ("fastapi", "fastapi>=0.115.0"),
     ("cryptography", "cryptography>=43.0.0"),
