@@ -113,52 +113,43 @@ elif menu == "🧮 Motor de Fórmulas Automatizadas":
         with c2:
             st.metric("Tasa de Incumplimiento Regulatorio", f"{tasa_incumplimiento:.2f}%")
             if tasa_incumplimiento > 10.0:
-                st.error(f"🚨 Brecha de Cumplimiento Crítica: Supera el límite permisible para certificaciones internacionales.")
+                st.error("🚨 Brecha de Cumplimiento Crítica: Supera el límite permisible para la normativa.")
             else:
                 st.success("✅ Cumplimiento Regulatorio Conforme.")
 
     elif tipo_auditoria == "Auditoría Forense / Especial":
         st.subheader("🕵️ Algoritmo de Detección de Anomalías Numéricas (Ley de Benford)")
-        st.markdown("Herramienta autónoma global para identificar manipulación de datos, fraudes en facturas, nóminas o registros contables.")
-        
         datos_ejemplo = st.text_area("Inserte los primeros dígitos de la muestra de transacciones (Separados por coma):", "1,2,1,4,5,1,1,2,3,9,8,1,2,7,1,1,3")
-        
         try:
             lista_digitos = [int(x.strip()) for x in datos_ejemplo.split(",") if x.strip().isdigit()]
             total_digitos = len(lista_digitos)
             unos = lista_digitos.count(1)
             porcentaje_unos = (unos / total_digitos) * 100 if total_digitos > 0 else 0
-            
-            st.metric("Frecuencia del Dígito '1' en la Muestra", f"{porcentaje_unos:.1f}%", delta=f"Desviación del estándar (Es: 30.1%)")
-            
+            st.metric("Frecuencia del Dígito '1' en la Muestra", f"{porcentaje_unos:.1f}%")
             if abs(porcentaje_unos - 30.1) > 10.0:
-                st.error("🚨 Alerta Forense Elevada: La distribución numérica diverge significativamente de la Ley de Benford. Alto indicio de alteración manual fraudulenta.")
+                st.error("🚨 Alerta Forense: La distribución numérica diverge significativamente de la Ley de Benford.")
             else:
-                st.success("✅ Consistencia Numérica Estándar: Sin anomalías iniciales detectadas en la muestra.")
-        except Exception as e:
-            st.warning("Formato de entrada no válido. Use números del 1 al 9 separados por comas.")
+                st.success("✅ Consistencia Numérica Estándar.")
+        except:
+            st.warning("Use números válidos del 1 al 9 separados por comas.")
 
 # ==========================================
 # MÓDULO 3: EJECUCIÓN Y LEYES VIGENTES
 # ==========================================
 elif menu == "📝 Ejecución y Leyes Locales":
     st.title("📜 Ejecución Autónoma con Alineación de Marco Legal Nacional")
-    st.info(f"Marco Jurídico de Mitigación Cargado para **{pais_sel}**: {', '.join(leyes_vigentes)}")
-    
-    st.subheader("Vincular Hallazgo a la Legislación Vigente Seleccionada")
+    st.info(f"Marco Jurídico Cargado para **{pais_sel}**: {', '.join(leyes_vigentes)}")
     with st.form("form_ejec"):
         ley_afectada = st.selectbox("Seleccione el cuerpo legal aplicable al Hallazgo:", leyes_vigentes + ["Norma Internacional Transversal"])
         detalles_hallazgo = st.text_area("Describa la condición o evidencia encontrada en el trabajo de campo:")
-        
         if st.form_submit_button("Sellar y Almacenar Papel de Trabajo"):
-            st.success(f"✓ Hallazgo blindado legalmente bajo el marco: {ley_afectada}. Registrado en base de datos inmutable.")
+            st.success(f"✓ Hallazgo blindado legalmente bajo el marco: {ley_afectada}.")
 
 # ==========================================
 # MÓDULO 4: DOWNLOAD DE REPORTES
 # ==========================================
 elif menu == "📥 Descarga de Informes":
     st.title("📥 Descarga de Informes de Auditoría Multidivisa")
-    
     buffer = io.BytesIO()
     df_export = pd.DataFrame(st.session_state.audits)
     df_export["País_Jurisdicción"] = pais_sel
@@ -168,3 +159,8 @@ elif menu == "📥 Descarga de Informes":
         df_export.to_excel(writer, sheet_name='Reporte_Global_Autónomo', index=False)
         
     st.download_button(
+        label=f"📥 Descargar Informes consolidados de {pais_sel} (.xlsx)",
+        data=buffer.getvalue(),
+        file_name=f"Informe_Autonomo_{pais_sel}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
