@@ -22,17 +22,19 @@ if 'db_empresas' not in st.session_state:
 if 'db_usuarios' not in st.session_state:
     st.session_state.db_usuarios = {
         "admin@auditacloud.com": {"clave": "AuditAdmin2026*", "rol": "Administrador Global", "nombre": "Oficial Master AI", "empresa_id": "Todas", "telefono": "8095551234", "identificacion": "001-0000000-1"},
+        "admin": {"clave": "AuditAdmin2026*", "rol": "Administrador Global", "nombre": "Oficial Master AI", "empresa_id": "Todas", "telefono": "8095551234", "identificacion": "001-0000000-1"},
         "auditor1@beta.com": {"clave": "Auditor2026*", "rol": "Auditor Senior", "nombre": "Lic. Juan Pérez", "empresa_id": "EMP-881", "telefono": "8095554321", "identificacion": "001-1234567-8"}
     }
 
 if 'universo_auditorias' not in st.session_state:
     st.session_state.universo_auditorias = [
         {"id": "AUD-001", "empresa_id": "EMP-881", "tipo": "Auditoría Forense y de Investigación", "programa": "Investigación de Fraude en Adquisiciones", "dependencia": "Ninguna (Fase Inicial)", "objeto": "Licitaciones de Obras Públicas", "probabilidad": 4, "impacto": 5, "riesgo_score": 20, "estado": "En Ejecución", "monto": 45000000.0},
-        {"id": "AUD-002", "empresa_id": "EMP-881", "tipo": "Auditoría Financiera y de Gestión", "programa": "Auditoría de Efectivo y Equivalentes", "dependencia": "AUD-001", "objeto": "Conciliaciones Bancarias de Proyectos", "probabilidad": 3, "impacto": 4, "riesgo_score": 12, "estado": "Planificado"}
+        {"id": "AUD-002", "empresa_id": "EMP-881", "tipo": "Auditoría Financiera y de Gestión", "programa": "Auditoría de Efectivo y Equivalentes", "dependencia": "AUD-001", "objeto": "Conciliaciones Bancarias de Proyectos", "probabilidad": 3, "impacto": 4, "riesgo_score": 12, "estado": "Planificado"},
+        {"id": "AUD-003", "empresa_id": "EMP-992", "tipo": "Auditoría Forense y de Investigación", "programa": "Rastreo de Malversación de Activos y Desvíos de Fondos", "dependencia": "Ninguna (Fase Inicial)", "objeto": "Transferencias Transfronterizas", "probabilidad": 5, "impacto": 5, "riesgo_score": 25, "estado": "En Ejecución", "monto": 1200000.0}
     ]
 
 if 'db_pagos' not in st.session_state:
-    st.session_state.db_pagos = {"EMP-881": True, "EMP-992": False}
+    st.session_state.db_pagos = {"EMP-881": True, "EMP-992": True}
 
 if 'registro_pruebas' not in st.session_state:
     st.session_state.registro_pruebas = {"EMP-992": datetime.now()}
@@ -41,7 +43,6 @@ if 'user_logged' not in st.session_state: st.session_state.user_logged = None
 if 'user_rol' not in st.session_state: st.session_state.user_rol = None
 if 'user_empresa' not in st.session_state: st.session_state.user_empresa = None
 
-# CATALOGO MAESTRO DE PROGRAMAS DE AUDITORÍA Y COMPONENTES
 PROGRAMAS_MASTER = {
     "Auditoría Financiera Corporativa (NIA/NIIF)": [
         "Auditoría de Efectivo y Equivalentes de Efectivo",
@@ -81,7 +82,7 @@ if st.session_state.user_logged is None:
     
     with t1:
         st.subheader("Acceso Seguro Enterprise")
-        user_input = st.text_input("Correo Electrónico Corporativo:")
+        user_input = st.text_input("Usuario o Correo Corporativo:")
         pass_input = st.text_input("Contraseña de Acceso:", type="password")
         if st.button("Autenticar en Servidor"):
             if user_input in st.session_state.db_usuarios and st.session_state.db_usuarios[user_input]["clave"] == pass_input:
@@ -114,7 +115,7 @@ if st.session_state.user_logged is None:
                     st.session_state.db_usuarios[admin_email] = {"clave": admin_pass, "rol": "Auditor Senior", "nombre": admin_name, "empresa_id": emp_id, "telefono": admin_tel, "identificacion": admin_ced}
                     st.session_state.db_pagos[emp_id] = False
                     st.session_state.registro_pruebas[emp_id] = datetime.now()
-                    st.success(f"✓ Empresa registrada con Código Único: {emp_id}. Dispone de 10 días de prueba válida.")
+                    st.success(f"✓ Empresa registrada con Código Único: {emp_id}.")
                     st.rerun()
                 else:
                     st.error("Por favor, complete todos los campos obligatorios.")
@@ -136,36 +137,32 @@ if st.session_state.user_logged is None:
     st.stop()
 
 # =========================================================================
-# 💳 VALIDACIÓN DE LICENCIA CORPORATIVA (10 DÍAS DE PRUEBA)
-# =========================================================================
-empresa_activa = st.session_state.user_empresa
-rol_activo = st.session_state.user_rol
-
-if rol_activo != "Administrador Global":
-    is_pagado = st.session_state.db_pagos.get(empresa_activa, False)
-    fecha_reg = st.session_state.registro_pruebas.get(empresa_activa, datetime.now())
-    dias_restantes = 10 - (datetime.now() - fecha_reg).days
-    
-    if not is_pagado:
-        if dias_restantes <= 0:
-            st.error("🚨 Período de prueba expirado (Validez: 10 Días). Bloqueo preventivo de seguridad. Active su licencia.")
-            if st.button("💳 Simular Pago de Licencia"):
-                st.session_state.db_pagos[empresa_activa] = True
-                st.success("Pago procesado. Módulos desbloqueados."); st.rerun()
-            st.stop()
-        else:
-            st.warning(f"⏳ Modo de Demostración Activo. Datos guardados en carpeta temporal válida por {dias_restantes} días.")
-
-# =========================================================================
 # 🗺️ CONFIGURACIÓN DE CONSOLA MULTIEMPRESA Y FILTROS
 # =========================================================================
 st.sidebar.title("🌐 AuditaCloud Core AI")
-st.sidebar.markdown(f"Usuario: **{st.session_state.user_logged}**\n\nRol: **{rol_activo}**")
+st.sidebar.markdown(f"Usuario: **{st.session_state.user_logged}**\n\nRol: **{st.session_state.user_rol}**")
 
 if st.sidebar.button("🚪 Cerrar Sesión Segura"):
-    st.session_state.user_logged = None; st.rerun()
+    st.session_state.user_logged = None
+    st.rerun()
 
 st.sidebar.markdown("---")
 
-if rol_activo == "Administrador Global":
+if st.session_state.user_rol == "Administrador Global":
     empresa_seleccionada = st.sidebar.selectbox("Inspeccionar Empresa:", list(st.session_state.db_empresas.keys()), format_func=lambda x: st.session_state.db_empresas[x]["nombre"])
+    moneda_simbolo = st.session_state.db_empresas[empresa_seleccionada]["moneda"]
+else:
+    empresa_seleccionada = st.session_state.user_empresa
+    moneda_simbolo = st.session_state.db_empresas[empresa_seleccionada]["moneda"]
+
+menu = st.sidebar.radio("Módulos del Sistema:", [
+    "📊 Tablero e Indicadores de Riesgo",
+    "🎯 Catálogo de Programas y Dependencias",
+    "🧮 Análisis Matemático Forense"
+])
+
+# ==========================================
+# MÓDULO 1: TABLERO ANALÍTICO Y MATRIZ DE RIESGO
+# ==========================================
+if menu == "📊 Tablero e Indicadores de Riesgo":
+    st.title("📊 Análisis de Riesgo Estructural (ISO 31000 / COSO)")
