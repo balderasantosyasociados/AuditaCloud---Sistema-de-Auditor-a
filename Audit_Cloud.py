@@ -7,6 +7,41 @@ from datetime import datetime
 # Configuración de la página
 st.set_page_config(page_title="AuditaCloud Global Autonomous AI", layout="wide", page_icon="🌐")
 
+# =========================================================================
+# 🔒 SISTEMA DE AUTENTICACIÓN (CLAVE MAESTRA CORPORATIVA)
+# =========================================================================
+CLAVE_MAESTRA = "AuditAdmin2026*"  # <-- CONFIGURA AQUÍ TU CONTRASEÑA MASTER REANUDABLE
+
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+
+if not st.session_state.autenticado:
+    st.title("🔒 Acceso Seguro a AuditaCloud Enterprise")
+    st.markdown("Por favor, introduzca las credenciales de cifrado del servidor central para continuar.")
+    
+    password_input = st.text_input("Clave Maestra de Infraestructura:", type="password")
+    btn_login = st.button("Validar Credenciales")
+    
+    if btn_login:
+        if password_input == CLAVE_MAESTRA:
+            st.session_state.autenticado = True
+            st.success("Acceso concedido. Cargando motor de auditoría...")
+            st.rerun()
+        else:
+            st.error("Clave Maestra incorrecta o revocada por el administrador del sistema.")
+            
+    st.stop()  # Detiene la carga del resto del software si no está validado
+# =========================================================================
+
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import io
+from datetime import datetime
+
+# Configuración de la página
+st.set_page_config(page_title="AuditaCloud Global Autonomous AI", layout="wide", page_icon="🌐")
+
 # --- BASE DE DATOS GLOBAL Y LOCALIZACIÓN SIMULADA ---
 PAISES_CONFIG = {
     "Estados Unidos": {"moneda": "USD ($)", "idioma": "English / Español", "leyes": ["SOX Act Section 404", "AICPA SAS", "GAAS"]},
