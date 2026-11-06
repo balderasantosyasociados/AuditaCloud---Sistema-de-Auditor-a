@@ -1071,7 +1071,16 @@ if st.sidebar.button(
     "🚪 Cerrar sesión",
     use_container_width=True
 ):
-    log_event(
+    log_event_tx(
+    conn,
+    "CREATE_USER",
+    "USER",
+    uid,
+    username.strip(),
+    USER["username"],
+    selected_company
+)
+(
         "LOGOUT",
         "USER",
         USER["id"],
@@ -1719,17 +1728,20 @@ elif MODULE == "📊 Dashboard":
             params={"company_id": selected_company},
         )
 
-        logs = pd.read_sql(
-            text("""
-                SELECT *
-                FROM event_log
-                WHERE company_id=:company_id
-                ORDER BY id DESC
-                LIMIT 500
-            """),
-            conn,
-            params={"company_id": selected_company},
-        )
+logs = pd.read_sql(
+    text("""
+        SELECT
+            id,event_time,
+            username,company_id,
+            action,object_type,
+            object_id,details,
+            event_hash
+        FROM event_log
+        ORDER BY id DESC
+        LIMIT 1000
+    """),
+    conn,
+)
 
     if not cases.empty:
         cases["risk"] = cases.apply(
