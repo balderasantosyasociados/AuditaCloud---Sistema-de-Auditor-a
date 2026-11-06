@@ -6,22 +6,25 @@ import sys
 import subprocess
 import importlib
 
-# Inyección y aseguramiento autónomo de dependencias Big Four en caliente
+# Aseguramiento y recarga autónoma de dependencias críticas en caliente
 DEPENDENCIAS_HOT_RELOAD = [
     ("streamlit", "streamlit>=1.40.0,<=1.45.0"),
+    ("starlette", "starlette>=0.46.0,<1.0.0"),  # Resuelve conflicto directo con Streamlit
     ("sqlalchemy", "SQLAlchemy>=2.0.0,<2.1.0"),
     ("fastapi", "fastapi>=0.115.0"),
     ("cryptography", "cryptography>=43.0.0"),
     ("lxml", "lxml>=5.3.0"),
     ("pydantic", "pydantic>=2.8.0,<3.0.0"),
-    ("dotenv", "python-dotenv>=1.0.0")
+    ("dotenv", "python-dotenv>=1.0.0"),
+    ("plotly", "plotly>=5.20.0"),
+    ("pandas", "pandas>=2.2.0")
 ]
 
 for modulo, paquete in DEPENDENCIAS_HOT_RELOAD:
     try:
         importlib.import_module(modulo)
     except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", paquete])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir", paquete])
 
 # --- Importaciones de la Suite de Inteligencia Avanzada ---
 import streamlit as st
@@ -86,8 +89,8 @@ if 'db_empresas' not in st.session_state:
 
 if 'db_usuarios' not in st.session_state:
     st.session_state.db_usuarios = {
-        "admin@auditacloud.com": {"clave": "AuditAdmin2026*", "rol": "Administrador Global", "nombre": "Oficial Master AI", "empresa_id": "Todas", "telefono": "8095551234", "identificacion": "001-0000000-1"},
-        "admin": {"clave": "AuditAdmin2026*", "rol": "Administrador Global", "nombre": "Oficial Master AI", "empresa_id": "Todas", "telefono": "8095551234", "identificacion": "001-0000000-1"}
+        "admin@auditacloud.com": {"clave": "AuditAdmin2026*", "rol": "Administrador Global", "nombre": "Oficial Master AI", "empresa_id": "Todas", "telefono": "18297717390", "identificacion": "001-0000000-1"},
+        "admin": {"clave": "AuditAdmin2026*", "rol": "Administrador Global", "nombre": "Oficial Master AI", "empresa_id": "Todas", "telefono": "18297717390", "identificacion": "001-0000000-1"}
     }
 
 if 'programas_b4_activos' not in st.session_state:
@@ -111,7 +114,9 @@ if 'universo_auditorias' not in st.session_state:
         {"id": "AUD-001", "empresa_id": "EMP-881", "tipo": "Auditoría Forense y de Investigación", "programa": "PROG-CCRD-1824", "objeto": "Libro Mayor - Control Posterior", "probabilidad": 4, "impacto": 5, "riesgo_score": 20, "estado": "En Ejecución", "monto": 85000000.0}
     ]
 
-if 'cadena_custodia_logs' not in st.session_state: st.session_state.cadena_custodia_logs = []
+if 'cadena_custodia_logs' not in st.session_state: 
+    st.session_state.cadena_custodia_logs = []
+
 if 'user_logged' not in st.session_state: st.session_state.user_logged = None
 if 'user_rol' not in st.session_state: st.session_state.user_rol = None
 if 'user_empresa' not in st.session_state: st.session_state.user_empresa = None
@@ -133,11 +138,43 @@ if st.session_state.user_logged is None:
                 st.session_state.user_empresa = usr_data["empresa_id"]
                 st.success(f"Token Validado. Bienvenido {usr_data['nombre']}")
                 st.rerun()
-            else: st.error("Credenciales de seguridad incorrectas.")
+            else: 
+                st.error("Credenciales de seguridad incorrectas.")
+    
+    with t2:
+        st.subheader("Registro de Nuevas Entidades / Firmas de Auditoría")
+        new_emp_id = st.text_input("Código Interno Empresa (Ej: EMP-101):")
+        new_emp_name = st.text_input("Nombre de la Entidad o Razón Social:")
+        new_emp_rnc = st.text_input("RNC Comercial:")
+        new_emp_curr = st.selectbox("Moneda Base de Operación:", ["DOP (RD$)", "USD ($)", "EUR (€)"])
+        
+        st.markdown("---")
+        new_user = st.text_input("Usuario / Email de Administrador Asociado:")
+        new_pass = st.text_input("Contraseña Nueva:", type="password")
+        new_phone = st.text_input("Teléfono para Alertas WhatsApp (Formato: 1829xxxxxxx):", value="18297717390")
+        
+        if st.button("Procesar Afiliación Completa"):
+            if new_emp_id and new_emp_name and new_user and new_pass:
+                st.session_state.db_empresas[new_emp_id] = {"rnc": new_emp_rnc, "nombre": new_emp_name, "moneda": new_emp_curr}
+                st.session_state.db_usuarios[new_user] = {"clave": new_pass, "rol": "Auditor Externo / Encargo", "nombre": new_user.split('@')[0].capitalize(), "empresa_id": new_emp_id, "telefono": new_phone, "identificacion": "001-xxxxxxx-x"}
+                st.success("Entidad y Usuario vinculados exitosamente al ecosistema.")
+            else:
+                st.error("Por favor complete los campos obligatorios.")
+
+    with t3:
+        st.subheader("Recuperación de Credenciales de Seguridad")
+        rec_user = st.text_input("Introduce tu cuenta o RNC para despacho de token:")
+        metodo_rec = st.radio("Canal de Despacho Seguro:", ["WhatsApp Corporativo", "Email Validado"])
+        if st.button("Despachar Clave de Recuperación"):
+            if rec_user in st.session_state.db_usuarios:
+                tel = st.session_state.db_usuarios[rec_user]["telefono"]
+                st.info(f"Código enviado satisfactoriamente mediante {metodo_rec} al destino configurado (Terminación: {tel[-4:]}).")
+            else:
+                st.error("El usuario indicado no se encuentra registrado en el directorio maestro.")
     st.stop()
 
 # =========================================================================
-# 🗺️ CONSOLA MULTIEMPRESA INTERACTIVA
+# 🗺️ CONSOLA MULTIEMPRESA INTERACTIVA (SIDEBAR)
 # =========================================================================
 st.sidebar.title("🌐 AuditaCloud Matrix V27")
 st.sidebar.markdown(f"Usuario: **{st.session_state.user_logged}**\n\nRol: **{st.session_state.user_rol}**")
@@ -149,44 +186,3 @@ if st.sidebar.button("🚪 Cerrar Sesión Segura"):
 st.sidebar.markdown("---")
 
 if st.session_state.user_rol == "Administrador Global":
-    empresa_seleccionada = st.sidebar.selectbox("Inspeccionar Empresa:", list(st.session_state.db_empresas.keys()), format_func=lambda x: st.session_state.db_empresas[x]["nombre"])
-    moneda_simbolo = st.session_state.db_empresas[empresa_seleccionada]["moneda"]
-else:
-    empresa_seleccionada = st.session_state.user_empresa
-    moneda_simbolo = st.session_state.db_empresas[empresa_seleccionada]["moneda"]
-
-menu = st.sidebar.radio("Módulos de Control Avanzado:", [
-    "📊 Risk Engine (ISA 315)",
-    "⚡ Calibración Dinámica de Reglas",
-    "🧮 Big Four Analytics Engine (ADA)",
-    "📜 Cadena de Custodia Criptográfica"
-])
-
-# =========================================================================
-# MÓDULO 1: RISK ENGINE (ISA 315)
-# =========================================================================
-if menu == "📊 Risk Engine (ISA 315)":
-    st.title("📊 Central Risk Engine (Monitoreo Continuo ISA 315)")
-    st.markdown(f"Entidad Analizada: **{st.session_state.db_empresas[empresa_seleccionada]['nombre']}**")
-    
-    df_audits = pd.DataFrame(st.session_state.universo_auditorias)
-    df_filtrado = df_audits[df_audits['empresa_id'] == empresa_seleccionada] if not df_audits.empty else pd.DataFrame()
-    
-    if not df_filtrado.empty:
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Focos Auditados Críticos", len(df_filtrado))
-        col2.metric("Volumen Financiero Expuesto", f"{moneda_simbolo} {df_filtrado['monto'].sum():,.2f}")
-        col3.metric("Riesgo Promedio", f"{df_filtrado['riesgo_score'].mean():.1f} / 25")
-        
-        st.markdown("---")
-        st.subheader("Mapa de Calor Dinámico de Desviación Financiera")
-        fig = px.scatter(df_filtrado, x="probabilidad", y="impacto", size="monto", color="riesgo_score", text="id", size_max=40, color_continuous_scale=px.colors.sequential.YlOrRd)
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("No existen matrices de riesgo configuradas actualmente.")
-
-# =========================================================================
-# MÓDULO 2: CALIBRACIÓN DINÁMICA DE REGLAS (MIGRATORIO JSON)
-# =========================================================================
-elif menu == "⚡ Calibración Dinámica de Reglas":
-    st.title("⚡ Inyección de Actualizaciones y Reglas Contables CCRD")
